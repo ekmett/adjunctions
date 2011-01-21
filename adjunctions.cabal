@@ -1,0 +1,29 @@
+name:          adjunctions
+category:      Data Structures, Adjunctions
+version:       0.6.1.2
+license:       BSD3
+cabal-version: >= 1.6
+license-file:  LICENSE
+author:        Edward A. Kmett
+maintainer:    Edward A. Kmett <ekmett@gmail.com>
+stability:     provisional
+homepage:      http://github.com/ekmett/adjunctions/
+copyright:     Copyright (C) 2011 Edward A. Kmett
+synopsis:      Adjunctions
+description:   Adjunctions
+build-type:    Simple
+
+source-repository head
+  type: git
+  location: git://github.com/ekmett/adjunctions.git
+
+library
+  build-depends: 
+    base >= 4 && < 4.4,
+    transformers >= 0.2.0 && < 0.3
+
+  exposed-modules:
+    Control.Monad.Trans.Adjoint
+    Data.Functor.Adjunction
+
+  ghc-options: -Wall 
