@@ -7,6 +7,8 @@ import Control.Monad.Instances ()
 import Control.Monad.Trans.Identity
 import Data.Functor.Identity
 
+-- > rightAdjunct unit = id
+-- > leftAdjunct counit = id 
 class (Functor f, Functor g) => Adjunction f g | f -> g, g -> f where
   unit :: a -> g (f a)
   counit :: f (g a) -> a

@@ -18,9 +18,11 @@ module Control.Monad.Trans.Adjoint
   , AdjointT(..)
   ) where
 
+import Prelude hiding (sequence)
 import Control.Applicative
 import Control.Monad (ap, liftM)
 import Control.Monad.Trans.Class
+import Data.Traversable
 import Data.Functor.Adjunction
 import Data.Functor.Identity
 
@@ -45,5 +47,7 @@ instance (Adjunction f g, Monad m) => Applicative (AdjointT f g m) where
 instance (Adjunction f g, Monad m) => Monad (AdjointT f g m) where
   return = AdjointT . leftAdjunct return
   AdjointT m >>= f = AdjointT $ fmap (>>= rightAdjunct (runAdjointT . f)) m
-
-instance Adjunction f g => MonadTrans (AdjointT f g)
+    
+-- | Exploiting this instance requires that we have the missing Traversables for Identity, (,)e and IdentityT
+instance (Adjunction f g, Traversable f) => MonadTrans (AdjointT f g) where
+  lift = AdjointT . fmap sequence . unit
