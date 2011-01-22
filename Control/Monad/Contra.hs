@@ -30,7 +30,7 @@ import Data.Functor.Contravariant.Adjunction
 
 type Contra f g = ContraT f g Identity
 
-newtype ContraT f g m a = ContraT { runContraT :: g (m (f a)) }
+newtype ContraT f g w a = ContraT { runContraT :: g (w (f a)) }
 
 contra :: Contravariant g => g (f a) -> Contra f g a
 contra = ContraT . contramap runIdentity
@@ -48,7 +48,3 @@ instance (Adjunction f g, Comonad w) => Applicative (ContraT f g w) where
 instance (Adjunction f g, Comonad w) => Monad (ContraT f g w) where
   return = ContraT . leftAdjunct extract
   ContraT m >>= f = ContraT $ contramap (extend (rightAdjunct (runContraT . f))) m
-    
--- | Exploiting this instance requires that we have the missing Traversables for Identity, (,)e and IdentityT
--- instance (Adjunction f g, Traversable f) => MonadTrans (ContraT f g) where
---  lift = ContraT . fmap sequence . unit
