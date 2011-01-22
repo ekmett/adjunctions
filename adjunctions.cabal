@@ -1,6 +1,6 @@
 name:          adjunctions
 category:      Data Structures, Adjunctions
-version:       0.2.2
+version:       0.3
 license:       BSD3
 cabal-version: >= 1.6
 license-file:  LICENSE
@@ -26,6 +26,7 @@ library
     transformers >= 0.2.0 && < 0.3
 
   exposed-modules:
+    Control.Monad.Contra
     Control.Monad.Trans.Adjoint
     Control.Comonad.Trans.Adjoint
     Data.Functor.Adjunction
