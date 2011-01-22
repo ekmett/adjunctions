@@ -1,6 +1,6 @@
 name:          adjunctions
 category:      Data Structures, Adjunctions
-version:       0.2
+version:       0.2.1
 license:       BSD3
 cabal-version: >= 1.6
 license-file:  LICENSE
@@ -21,10 +21,13 @@ library
   build-depends: 
     base >= 4 && < 4.4,
     contravariant >= 0.1.2 && < 0.2,
+    comonad >= 0.6.2 && < 0.8,
+    comonad-transformers >= 0.6.1 && < 0.8,
     transformers >= 0.2.0 && < 0.3
 
   exposed-modules:
     Control.Monad.Trans.Adjoint
+    Control.Comonad.Trans.Adjoint
     Data.Functor.Adjunction
     Data.Functor.Contravariant.Adjunction
     Data.Functor.Zap
