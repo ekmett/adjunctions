@@ -1,6 +1,6 @@
 name:          adjunctions
 category:      Data Structures, Adjunctions
-version:       0.6.1.2
+version:       0.1.1
 license:       BSD3
 cabal-version: >= 1.6
 license-file:  LICENSE
@@ -20,10 +20,13 @@ source-repository head
 library
   build-depends: 
     base >= 4 && < 4.4,
+    contravariant >= 0.1.2 && < 0.2,
     transformers >= 0.2.0 && < 0.3
 
   exposed-modules:
     Control.Monad.Trans.Adjoint
     Data.Functor.Adjunction
+    Data.Functor.Contravariant.Adjunction
+    Data.Functor.Zap
 
   ghc-options: -Wall 
