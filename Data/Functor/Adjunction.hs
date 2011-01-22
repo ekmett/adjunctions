@@ -1,4 +1,4 @@
-{-# LANGUAGE Rank2Types, MultiParamTypeClasses, FunctionalDependencies, UndecidableInstances, ImplicitParams #-}
+{-# LANGUAGE Rank2Types, MultiParamTypeClasses, FunctionalDependencies, UndecidableInstances #-}
 
 -------------------------------------------------------------------------------------------
 -- |
@@ -17,11 +17,17 @@ module Data.Functor.Adjunction
   , repAdjunction
   ) where
 
+import Control.Applicative
 import Control.Monad.Instances ()
 import Control.Monad.Trans.Identity
+
+import Control.Monad.Trans.Reader
+import Control.Comonad.Trans.Env
+
 import Data.Functor.Identity
 import Data.Functor.Compose
 import qualified Data.Functor.Contravariant.Adjunction as C
+import qualified Data.Functor.Contravariant.DualAdjunction as C
 import qualified Data.Functor.Contravariant.Compose as C
 
 -- | An adjunction between Hask and Hask.
@@ -51,6 +57,10 @@ instance Adjunction f g => Adjunction (IdentityT f) (IdentityT g) where
   unit = IdentityT . leftAdjunct IdentityT
   counit = rightAdjunct runIdentityT . runIdentityT
 
+instance Adjunction w m => Adjunction (EnvT e w) (ReaderT e m) where
+  unit a = ReaderT $ \e -> EnvT e <$> unit a
+  counit (EnvT e w) = counit $ fmap (flip runReaderT e) w
+
 instance (Adjunction f g, Adjunction f' g') => Adjunction (Compose f' f) (Compose g g') where
   unit = Compose . leftAdjunct (leftAdjunct Compose) 
   counit = rightAdjunct (rightAdjunct getCompose) . getCompose
@@ -58,6 +68,14 @@ instance (Adjunction f g, Adjunction f' g') => Adjunction (Compose f' f) (Compos
 instance (C.Adjunction f g, C.DualAdjunction f' g') => Adjunction (C.Compose f' f) (C.Compose g g') where
   unit = C.Compose . C.leftAdjunct (C.leftAdjunctOp C.Compose)
   counit = C.rightAdjunctOp (C.rightAdjunct C.getCompose) . C.getCompose
+
+-- instance (C.DualAdjunction f g, C.Adjunction f' g') => Adjunction (C.Compose g g') (C.Compose f' f) where
+-- 
+-- This would require me to make separate compositions for contravariant adjunctions and contravariant dual-adjunctions,
+-- but you can always just flip the arguments and get the opposite adjunction. This works because for f -| g : Hask -> Hask:
+--
+-- class Adjunction f g => DualAdjunction g f
+-- instance Adjunction f g => DualAdjunction g f
 
 data Representation f x = Representation
   { rep :: forall a. (x -> a) -> f a

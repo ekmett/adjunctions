@@ -21,8 +21,8 @@ library
   build-depends: 
     base >= 4 && < 4.4,
     contravariant >= 0.1.2 && < 0.2,
-    comonad >= 0.6.2 && < 0.8,
-    comonad-transformers >= 0.6.1 && < 0.8,
+    comonad >= 0.6.2.1 && < 0.8,
+    comonad-transformers >= 0.6.5 && < 0.8,
     transformers >= 0.2.0 && < 0.3
 
   exposed-modules:
@@ -30,6 +30,7 @@ library
     Control.Comonad.Trans.Adjoint
     Data.Functor.Adjunction
     Data.Functor.Contravariant.Adjunction
+    Data.Functor.Contravariant.DualAdjunction
     Data.Functor.Zap
 
   ghc-options: -Wall 
