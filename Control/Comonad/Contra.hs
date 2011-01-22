@@ -21,9 +21,8 @@ module Control.Comonad.Contra
   ) where
 
 import Prelude hiding (sequence)
-import Control.Applicative
 import Control.Comonad
-import Control.Monad (liftM, ap)
+import Control.Monad (liftM)
 import Data.Functor.Identity
 import Data.Functor.Contravariant
 import Data.Functor.Contravariant.DualAdjunction
