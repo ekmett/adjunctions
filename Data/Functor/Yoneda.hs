@@ -25,19 +25,19 @@ module Data.Functor.Yoneda
 
 import Prelude hiding (sequence)
 import Control.Applicative
-import Control.Monad (MonadPlus(..), ap, liftM)
+import Control.Monad (MonadPlus(..), liftM)
 import Control.Monad.Fix
 import Control.Monad.Trans.Class
 import Control.Comonad
 import Control.Comonad.Trans.Class
-import Control.Monad.Fix
+import Data.Distributive
 import Data.Foldable
-import Data.Traversable
+import Data.Function (on)
 import Data.Functor.Apply
-import Data.Functor.Alt
+import Data.Functor.Plus
 import Data.Functor.Identity
 import Data.Functor.Adjunction
-import Data.Distributive
+import Data.Traversable
 import Text.Read hiding (lift)
 
 type Yoneda = YonedaT Identity 
@@ -72,7 +72,7 @@ lowerYonedaT (YonedaT f) = f id
 instance Functor (YonedaT f) where
   fmap f m = YonedaT (\k -> runYonedaT m (k . f))
 
-instance FunctorApply f => FunctorApply (YonedaT f) where
+instance Apply f => Apply (YonedaT f) where
   YonedaT m <.> YonedaT n = YonedaT (\f -> m (f .) <.> n id)
   
 instance Applicative f => Applicative (YonedaT f) where
@@ -132,8 +132,11 @@ YonedaT f `minM` YonedaT g = lift $ f id `min` g id
 -- {-# RULES "min/minM" min = minM #-}
 {-# INLINE minM #-}
 
-instance FunctorAlt f => FunctorAlt (YonedaT f) where
+instance Alt f => Alt (YonedaT f) where
   YonedaT f <!> YonedaT g = YonedaT (\k -> f k <!> g k)
+
+instance Plus f => Plus (YonedaT f) where
+  zero = YonedaT $ const zero
 
 instance Alternative f => Alternative (YonedaT f) where
   empty = YonedaT $ const empty
@@ -153,9 +156,11 @@ instance MonadPlus m => MonadPlus (YonedaT m) where
 instance MonadTrans YonedaT where
   lift a = YonedaT (\f -> liftM f a)
 
+instance Extend w => Extend (YonedaT w) where
+  extend k (YonedaT m) = YonedaT (\f -> extend (f . k . liftYonedaT) (m id))
+
 instance Comonad w => Comonad (YonedaT w) where
   extract = extract . lowerYonedaT 
-  extend k (YonedaT m) = YonedaT (\f -> extend (f . k . liftYonedaT) (m id))
 
 instance ComonadTrans YonedaT where
   lower = lowerYonedaT 

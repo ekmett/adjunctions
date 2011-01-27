@@ -1,7 +1,7 @@
 {-# LANGUAGE Rank2Types #-}
 -----------------------------------------------------------------------------
 -- |
--- Module      :  Control.Monad.Trans.CodensityT
+-- Module      :  Control.Monad.Trans.Codensity
 -- Copyright   :  (C) 2008-2011 Edward Kmett
 -- License     :  BSD-style (see the file LICENSE)
 --
@@ -10,7 +10,7 @@
 -- Portability :  non-portable (rank-2 polymorphism)
 --
 ----------------------------------------------------------------------------
-module Control.Monad.Trans.CodensityT
+module Control.Monad.Trans.Codensity
   ( CodensityT(..)
   , lowerCodensityT
   , codensityTToAdjunction

@@ -30,9 +30,11 @@ data DensityT k a where
 instance Functor (DensityT f) where
   fmap f (DensityT g h) = DensityT (f . g) h
 
+instance Extend (DensityT f) where
+  duplicate (DensityT f ws) = DensityT (DensityT f) ws
+
 instance Comonad (DensityT f) where
   extract (DensityT f a) = f a
-  duplicate (DensityT f ws) = DensityT (DensityT f) ws
 
 instance ComonadTrans DensityT where
   lower (DensityT f c) = extend f c
