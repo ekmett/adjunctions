@@ -1,7 +1,7 @@
 {-# LANGUAGE Rank2Types #-}
 -----------------------------------------------------------------------------
 -- |
--- Module      :  Control.Monad.Trans.Codensity
+-- Module      :  Control.Monad.Trans.CodensityT
 -- Copyright   :  (C) 2008-2011 Edward Kmett
 -- License     :  BSD-style (see the file LICENSE)
 --
@@ -10,11 +10,11 @@
 -- Portability :  non-portable (rank-2 polymorphism)
 --
 ----------------------------------------------------------------------------
-module Control.Monad.Trans.Codensity
-  ( Codensity(..)
-  , lowerCodensity
-  , codensityToAdjunction
-  , adjunctionToCodensity
+module Control.Monad.Trans.CodensityT
+  ( CodensityT(..)
+  , lowerCodensityT
+  , codensityTToAdjunction
+  , adjunctionToCodensityT
   ) where
 
 import Control.Applicative
@@ -23,35 +23,41 @@ import Data.Functor.Adjunction
 import Data.Functor.Apply
 import Control.Monad.Trans.Class
 
-newtype Codensity m a = Codensity { runCodensity :: forall b. (a -> m b) -> m b }
-
-instance Functor (Codensity k) where
-  fmap f m = Codensity (\k -> runCodensity m (k . f))
-
-instance FunctorApply (Codensity f) where
-  (<.>) = ap
-
-instance Applicative (Codensity f) where
-  pure x = Codensity (\k -> k x)
-  (<*>) = ap
-
-instance Monad (Codensity f) where
-  return x = Codensity (\k -> k x)
-  m >>= k = Codensity (\c -> runCodensity m (\a -> runCodensity (k a) c))
-
 {-
-instance MonadIO m => MonadIO (Codensity m) where
-  liftIO = liftCodensity . liftIO 
+type Codensity = CodensityT Identity
+codensity :: (forall b. (a -> b) -> b) -> Codensity a
+runCodensity :: Codensity a -> (a -> b) -> a
 -}
 
-instance MonadTrans Codensity where
-  lift m = Codensity (m >>=)
+newtype CodensityT m a = CodensityT { runCodensityT :: forall b. (a -> m b) -> m b }
 
-lowerCodensity :: Monad m => Codensity m a -> m a
-lowerCodensity a = runCodensity a return
+instance Functor (CodensityT k) where
+  fmap f (CodensityT m) = CodensityT (\k -> m (k . f))
 
-codensityToAdjunction :: Adjunction f g => Codensity g a -> g (f a)
-codensityToAdjunction r = runCodensity r unit
+instance Apply (CodensityT f) where
+  (<.>) = ap
 
-adjunctionToCodensity :: Adjunction f g => g (f a) -> Codensity g a
-adjunctionToCodensity f = Codensity (\a -> fmap (rightAdjunct a) f)
+instance Applicative (CodensityT f) where
+  pure x = CodensityT (\k -> k x)
+  (<*>) = ap
+
+instance Monad (CodensityT f) where
+  return x = CodensityT (\k -> k x)
+  m >>= k = CodensityT (\c -> runCodensityT m (\a -> runCodensityT (k a) c))
+
+{-
+instance MonadIO m => MonadIO (CodensityT m) where
+  liftIO = liftCodensityT . liftIO 
+-}
+
+instance MonadTrans CodensityT where
+  lift m = CodensityT (m >>=)
+
+lowerCodensityT :: Monad m => CodensityT m a -> m a
+lowerCodensityT a = runCodensityT a return
+
+codensityTToAdjunction :: Adjunction f g => CodensityT g a -> g (f a)
+codensityTToAdjunction r = runCodensityT r unit
+
+adjunctionToCodensityT :: Adjunction f g => g (f a) -> CodensityT g a
+adjunctionToCodensityT f = CodensityT (\a -> fmap (rightAdjunct a) f)

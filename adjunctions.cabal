@@ -21,23 +21,22 @@ library
   build-depends: 
     base >= 4 && < 4.4,
     contravariant >= 0.1.2 && < 0.2,
-    comonad >= 0.7 && < 0.8,
+    comonad >= 0.9 && < 0.10,
     distributive >= 0.1 && < 0.2,
-    functor-apply >= 0.7.4.1 && < 0.8,
-    comonad-transformers >= 0.7 && < 0.8,
+    functor-apply >= 0.9.3 && < 0.8,
+    comonad-transformers >= 0.9 && < 0.8,
     transformers >= 0.2.0 && < 0.3
 
   exposed-modules:
-    Control.Comonad.Contra.Adjoint
     Control.Comonad.Trans.Adjoint
     Control.Comonad.Trans.Density
-    Control.Monad.Contra.Cont
-    Control.Monad.Contra.Adjoint
     Control.Monad.Trans.Adjoint
     Control.Monad.Trans.Codensity
+    Control.Monad.Trans.Yoneda
+    Control.Monad.Trans.Conts
+    Control.Monad.Trans.Contravariant.Adjoint
     Data.Functor.Adjunction
     Data.Functor.Contravariant.Adjunction
-    Data.Functor.Contravariant.DualAdjunction
     Data.Functor.Zap
 
   ghc-options: -Wall 

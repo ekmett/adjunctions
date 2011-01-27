@@ -14,6 +14,10 @@ import Data.Functor.Contravariant
 --
 -- > rightAdjunct unit = id
 -- > leftAdjunct counit = id
+--
+-- Any adjunction from Hask to Hask^op would indirectly
+-- permit unsafePerformIO, and therefore does not exist.
+
 class (Contravariant f, Contravariant g) => Adjunction f g | f -> g, g -> f where
   unit :: a -> g (f a) -- monad in Hask
   counit :: a -> f (g a) -- comonad in Hask^op

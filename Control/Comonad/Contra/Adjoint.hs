@@ -41,6 +41,5 @@ instance (Contravariant f, Contravariant g, Monad m) => Functor (AdjointT f g m)
   fmap f (AdjointT g) = AdjointT $ contramap (liftM (contramap f)) g
   
 instance (DualAdjunction f g, Monad m) => Comonad (AdjointT f g m) where
-  extract = rightAdjunctOp return . runAdjointT
-  extend f = AdjointT . contramap (>>= leftAdjunctOp (f . AdjointT)) . runAdjointT
-
+  extract = rightAdjunct return . runAdjointT
+  extend f = AdjointT . contramap (>>= leftAdjunct (f . AdjointT)) . runAdjointT
