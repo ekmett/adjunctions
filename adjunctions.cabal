@@ -38,6 +38,7 @@ library
     Data.Functor.Contravariant.Adjunction
     Data.Functor.Zap
     Data.Functor.Yoneda
+    Data.Functor.Yoneda.Contravariant
 
   ghc-options: -Wall 
 
