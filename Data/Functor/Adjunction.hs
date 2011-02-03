@@ -46,6 +46,9 @@ class (Functor f, Distributive g) => Adjunction f g | f -> g, g -> f where
   leftAdjunct f = fmap f . unit
   rightAdjunct f = counit . fmap f
 
+-- | Every right adjoint is representable by its left adjoint applied to unit 
+-- Consequently, we use the isomorphism from ((->) f ()) ~ g to distribute
+-- the right adjoint over any other functor.
 distributeAdjunct :: (Adjunction f g, Functor w) => w (g a) -> g (w a)
 distributeAdjunct wg = leftAdjunct (\a -> fmap (\b -> rightAdjunct (const b) a) wg) ()
 
