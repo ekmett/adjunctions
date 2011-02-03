@@ -13,6 +13,7 @@
 -------------------------------------------------------------------------------------------
 module Data.Functor.Adjunction 
   ( Adjunction(..)
+  , distributeAdjunct
   , Representation(..)
   , repAdjunction
   ) where
@@ -24,6 +25,7 @@ import Control.Monad.Trans.Identity
 import Control.Monad.Trans.Reader
 import Control.Comonad.Trans.Env
 
+import Data.Distributive
 import Data.Functor.Identity
 import Data.Functor.Compose
 -- import qualified Data.Functor.Contravariant.Adjunction as C
@@ -33,7 +35,7 @@ import Data.Functor.Compose
 --
 -- > rightAdjunct unit = id
 -- > leftAdjunct counit = id 
-class (Functor f, Functor g) => Adjunction f g | f -> g, g -> f where
+class (Functor f, Distributive g) => Adjunction f g | f -> g, g -> f where
   unit :: a -> g (f a)
   counit :: f (g a) -> a
   leftAdjunct :: (f a -> b) -> a -> g b
@@ -43,6 +45,9 @@ class (Functor f, Functor g) => Adjunction f g | f -> g, g -> f where
   counit = rightAdjunct id
   leftAdjunct f = fmap f . unit
   rightAdjunct f = counit . fmap f
+
+distributeAdjunct :: (Adjunction f g, Functor w) => w (g a) -> g (w a)
+distributeAdjunct wg = leftAdjunct (\a -> fmap (\b -> rightAdjunct (const b) a) wg) ()
 
 instance Adjunction ((,)e) ((->)e) where
   leftAdjunct f a e = f (e, a)
