@@ -1,6 +1,6 @@
 name:          adjunctions
 category:      Data Structures, Adjunctions
-version:       0.9.0
+version:       0.9.0.1
 license:       BSD3
 cabal-version: >= 1.6
 license-file:  LICENSE
@@ -28,7 +28,7 @@ library
     distributive >= 0.1.1 && < 0.2,
     keys >= 0.2 && < 0.3,
     mtl >= 2.0.1.0 && < 2.1,
-    representable-functors >= 0.3 && < 0.4,
+    representable-functors >= 0.3.0.1 && < 0.4,
     semigroups >= 0.3.4 && < 0.4,
     semigroupoids >= 1.1.1 && < 1.2.0,
     transformers >= 0.2.0 && < 0.3,
