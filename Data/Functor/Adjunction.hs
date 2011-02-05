@@ -13,29 +13,27 @@
 -------------------------------------------------------------------------------------------
 module Data.Functor.Adjunction 
   ( Adjunction(..)
-  , distributeAdjunct
-  , Representation(..)
-  , repAdjunction
+  , tabulateAdjunction
+  , indexAdjunction
   ) where
 
-import Control.Applicative
 import Control.Monad.Instances ()
 import Control.Monad.Trans.Identity
 
+import Control.Monad.Representable
 import Control.Monad.Trans.Reader
+import Control.Monad.Trans.Writer
 import Control.Comonad.Trans.Env
+import Control.Comonad.Trans.Traced
 
-import Data.Distributive
 import Data.Functor.Identity
 import Data.Functor.Compose
--- import qualified Data.Functor.Contravariant.Adjunction as C
--- import qualified Data.Functor.Contravariant.Compose as C
 
 -- | An adjunction between Hask and Hask.
 --
 -- > rightAdjunct unit = id
 -- > leftAdjunct counit = id 
-class (Functor f, Distributive g) => Adjunction f g | f -> g, g -> f where
+class (Functor f, Representable g) => Adjunction f g | f -> g, g -> f where
   unit :: a -> g (f a)
   counit :: f (g a) -> a
   leftAdjunct :: (f a -> b) -> a -> g b
@@ -46,11 +44,11 @@ class (Functor f, Distributive g) => Adjunction f g | f -> g, g -> f where
   leftAdjunct f = fmap f . unit
   rightAdjunct f = counit . fmap f
 
--- | Every right adjoint is representable by its left adjoint applied to unit 
--- Consequently, we use the isomorphism from ((->) f ()) ~ g to distribute
--- the right adjoint over any other functor.
-distributeAdjunct :: (Adjunction f g, Functor w) => w (g a) -> g (w a)
-distributeAdjunct wg = leftAdjunct (\a -> fmap (\b -> rightAdjunct (const b) a) wg) ()
+tabulateAdjunction :: Adjunction f g => (f () -> b) -> g b
+tabulateAdjunction f = leftAdjunct f ()
+
+indexAdjunction :: Adjunction f g => g b -> f a -> b
+indexAdjunction = rightAdjunct . const
 
 instance Adjunction ((,)e) ((->)e) where
   leftAdjunct f a e = f (e, a)
@@ -65,20 +63,13 @@ instance Adjunction f g => Adjunction (IdentityT f) (IdentityT g) where
   counit = rightAdjunct runIdentityT . runIdentityT
 
 instance Adjunction w m => Adjunction (EnvT e w) (ReaderT e m) where
-  unit a = ReaderT $ \e -> EnvT e <$> unit a
+  unit = ReaderT . flip fmap EnvT . flip leftAdjunct
   counit (EnvT e w) = counit $ fmap (flip runReaderT e) w
+
+instance Adjunction m w => Adjunction (WriterT s m) (TracedT s w) where
+  unit = TracedT . leftAdjunct (\ma s -> WriterT (fmap (\a -> (a, s)) ma)) 
+  -- counit (WriterT mwas) = 
 
 instance (Adjunction f g, Adjunction f' g') => Adjunction (Compose f' f) (Compose g g') where
   unit = Compose . leftAdjunct (leftAdjunct Compose) 
   counit = rightAdjunct (rightAdjunct getCompose) . getCompose
-
-data Representation f x = Representation
-  { rep :: forall a. (x -> a) -> f a
-  , unrep :: forall a. f a -> x -> a
-  }
- 
-repAdjunction :: Adjunction f g => Representation g (f ())
-repAdjunction = Representation 
-  { rep = flip leftAdjunct ()
-  , unrep = rightAdjunct . const
-  }

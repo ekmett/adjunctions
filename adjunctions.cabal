@@ -1,6 +1,6 @@
 name:          adjunctions
 category:      Data Structures, Adjunctions
-version:       0.6.0
+version:       0.7.0
 license:       BSD3
 cabal-version: >= 1.6
 license-file:  LICENSE
@@ -19,27 +19,28 @@ source-repository head
 
 library
   build-depends: 
+    array >= 0.3.0.2 && < 0.4,
     base >= 4 && < 4.4,
-    contravariant >= 0.1.2 && < 0.2,
     comonad >= 1.0 && < 1.1,
+    comonad-transformers >= 1.5.1 && < 1.6,
+    containers >= 0.4 && < 0.5,
+    contravariant >= 0.1.2 && < 0.2,
     distributive >= 0.1.1 && < 0.2,
-    semigroupoids >= 1.1.0 && < 1.2.0,
-    comonad-transformers >= 1.5 && < 1.6,
+    keys >= 0.1.0.1 && < 0.2,
+    mtl >= 2.0.1.0 && < 2.1,
+    representable-functors >= 0.1.0.1 && < 0.2,
+    semigroups >= 0.3.4 && < 0.4,
+    semigroupoids >= 1.1.1 && < 1.2.0,
     transformers >= 0.2.0 && < 0.3
 
   exposed-modules:
+    Data.Functor.Adjunction
+    Data.Functor.Contravariant.Adjunction
+
     Control.Comonad.Trans.Adjoint
-    Control.Comonad.Trans.Density
     Control.Monad.Trans.Adjoint
-    Control.Monad.Trans.Codensity
     Control.Monad.Trans.Conts
     Control.Monad.Trans.Contravariant.Adjoint
-    Data.Functor.Adjunction
-    Data.Functor.Composition
-    Data.Functor.Contravariant.Adjunction
-    Data.Functor.Zap
-    Data.Functor.Yoneda
-    Data.Functor.Yoneda.Contravariant
-    Data.Functor.KanExtension
 
-  ghc-options: -Wall 
+  ghc-options: -Wall
+
