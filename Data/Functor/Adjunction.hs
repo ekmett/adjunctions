@@ -101,6 +101,7 @@ uncozipF = fmap Left ||| fmap Right
 -- limitR :: Adjunction f u => (forall a. u a) -> u (forall a. a)
 -- limitR = leftAdjunct (rightAdjunct (\(x :: forall a. a) -> x))
 
+
 instance Adjunction ((,)e) ((->)e) where
   leftAdjunct f a e = f (e, a)
   rightAdjunct f ~(e, a) = f a e
