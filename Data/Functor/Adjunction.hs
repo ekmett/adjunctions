@@ -29,8 +29,6 @@ import Control.Applicative
 import Control.Arrow ((&&&), (|||))
 import Control.Monad.Instances ()
 import Control.Monad.Trans.Identity
-
-import Control.Monad.Representable
 import Control.Monad.Trans.Reader
 import Control.Monad.Trans.Writer
 import Control.Comonad.Trans.Env
@@ -38,7 +36,7 @@ import Control.Comonad.Trans.Traced
 
 import Data.Functor.Identity
 import Data.Functor.Compose
-
+import Data.Functor.Representable
 import Data.Void
 
 -- | An adjunction between Hask and Hask.
