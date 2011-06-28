@@ -1,6 +1,6 @@
 name:          adjunctions
 category:      Data Structures, Adjunctions
-version:       0.9.3
+version:       1.1.0
 license:       BSD3
 cabal-version: >= 1.6
 license-file:  LICENSE
