@@ -1,6 +1,6 @@
 name:          adjunctions
 category:      Data Structures, Adjunctions
-version:       2.2.1.1
+version:       2.4
 license:       BSD3
 cabal-version: >= 1.6
 license-file:  LICENSE
@@ -39,7 +39,7 @@ library
     void                   >= 0.5.5.1 && < 0.6,
     keys                   >= 2.1.3   && < 2.2,
     comonad-transformers   >= 2.1.1   && < 2.2,
-    representable-functors >= 2.2.1   && < 2.3
+    representable-functors >= 2.4     && < 2.5
 
   exposed-modules:
     Data.Functor.Adjunction
