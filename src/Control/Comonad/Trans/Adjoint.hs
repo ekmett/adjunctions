@@ -23,6 +23,7 @@ import Control.Applicative
 import Control.Comonad
 import Control.Comonad.Trans.Class
 import Data.Functor.Adjunction
+import Data.Functor.Extend
 import Data.Functor.Identity
 import Data.Distributive
 
@@ -40,11 +41,11 @@ instance (Adjunction f g, Functor w) => Functor (AdjointT f g w) where
   fmap f (AdjointT g) = AdjointT $ fmap (fmap (fmap f)) g
   b <$ (AdjointT g) = AdjointT $ fmap (fmap (b <$)) g
 
-
 instance (Adjunction f g, Extend w) => Extend (AdjointT f g w) where
-  extend f (AdjointT m) = AdjointT $ fmap (extend $ leftAdjunct (f . AdjointT)) m
+  extended f (AdjointT m) = AdjointT $ fmap (extended $ leftAdjunct (f . AdjointT)) m
 
 instance (Adjunction f g, Comonad w) => Comonad (AdjointT f g w) where
+  extend f (AdjointT m) = AdjointT $ fmap (extend $ leftAdjunct (f . AdjointT)) m
   extract = rightAdjunct extract . runAdjointT
   
 {-
