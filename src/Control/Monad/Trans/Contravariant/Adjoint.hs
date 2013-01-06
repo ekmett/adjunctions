@@ -13,14 +13,14 @@
 --
 -- f -| g : Hask^op -> Hask
 --
--- to build a 'Comonad' to 'Monad' transformer. Sadly, the dual construction, 
--- which builds a 'Comonad' out of a 'Monad', is uninhabited, because any 
+-- to build a 'Comonad' to 'Monad' transformer. Sadly, the dual construction,
+-- which builds a 'Comonad' out of a 'Monad', is uninhabited, because any
 -- 'Adjunction' of the form
--- 
+--
 -- > f -| g : Hask -> Hask^op
--- 
+--
 -- would trivially admit unsafePerformIO.
--- 
+--
 ----------------------------------------------------------------------------
 
 module Control.Monad.Trans.Contravariant.Adjoint
@@ -50,7 +50,7 @@ runAdjoint = contramap Identity . runAdjointT
 
 instance (Adjunction f g, Functor w) => Functor (AdjointT f g w) where
   fmap f (AdjointT g) = AdjointT $ contramap (fmap (contramap f)) g
-  
+
 instance (Adjunction f g, Comonad w) => Applicative (AdjointT f g w) where
   pure = AdjointT . leftAdjunct extract
   (<*>) = ap

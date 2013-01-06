@@ -1,6 +1,6 @@
 name:          adjunctions
 category:      Data Structures, Adjunctions
-version:       3.0.0.1
+version:       3.0.0.2
 license:       BSD3
 cabal-version: >= 1.6
 license-file:  LICENSE
@@ -38,7 +38,7 @@ library
     containers             >= 0.3     && < 0.6,
     comonad                == 3.0.*,
     contravariant          >= 0.2.0.1 && < 0.3,
-    distributive           >= 0.2.2   && < 0.3,
+    distributive           >= 0.2.2   && < 0.4,
     semigroupoids          == 3.0.*,
     void                   >= 0.5.5.1 && < 0.6,
     keys                   == 3.0.*,

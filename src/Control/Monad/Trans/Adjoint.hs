@@ -38,8 +38,8 @@ runAdjoint = fmap runIdentity . runAdjointT
 
 instance (Adjunction f g, Monad m) => Functor (AdjointT f g m) where
   fmap f (AdjointT g) = AdjointT $ fmap (liftM (fmap f)) g
-  b <$ (AdjointT g) = AdjointT $ fmap (liftM (b <$)) g
-  
+  b <$ AdjointT g = AdjointT $ fmap (liftM (b <$)) g
+
 instance (Adjunction f g, Monad m) => Applicative (AdjointT f g m) where
   pure = AdjointT . leftAdjunct return
   (<*>) = ap
@@ -47,7 +47,7 @@ instance (Adjunction f g, Monad m) => Applicative (AdjointT f g m) where
 instance (Adjunction f g, Monad m) => Monad (AdjointT f g m) where
   return = AdjointT . leftAdjunct return
   AdjointT m >>= f = AdjointT $ fmap (>>= rightAdjunct (runAdjointT . f)) m
-    
+
 -- | Exploiting this instance requires that we have the missing Traversables for Identity, (,)e and IdentityT
 instance (Adjunction f g, Traversable f) => MonadTrans (AdjointT f g) where
   lift = AdjointT . fmap sequence . unit
