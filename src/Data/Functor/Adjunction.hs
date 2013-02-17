@@ -18,6 +18,7 @@ module Data.Functor.Adjunction
   ( Adjunction(..)
   , tabulateAdjunction
   , indexAdjunction
+  , zapWithAdjunction
   , zipR, unzipR
   , unabsurdL, absurdL
   , cozipL, uncozipL
@@ -87,6 +88,9 @@ tabulateAdjunction f = leftAdjunct f ()
 -- Representable.
 indexAdjunction :: Adjunction f u => u b -> f a -> b
 indexAdjunction = rightAdjunct . const
+
+zapWithAdjunction :: Adjunction f u => (a -> b -> c) -> u a -> f b -> c
+zapWithAdjunction f ua = rightAdjunct (\b -> fmap (flip f b) ua)
 
 splitL :: Adjunction f u => f a -> (a, f ())
 splitL = rightAdjunct (flip leftAdjunct () . (,))
