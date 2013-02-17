@@ -18,6 +18,7 @@ module Data.Functor.Adjunction
   ( Adjunction(..)
   , tabulateAdjunction
   , indexAdjunction
+  , zapWithAdjunction
   , zipR, unzipR
   , unabsurdL, absurdL
   , cozipL, uncozipL
@@ -27,15 +28,20 @@ module Data.Functor.Adjunction
 
 import Control.Applicative
 import Control.Arrow ((&&&), (|||))
+import Control.Monad.Free
 import Control.Monad.Instances ()
 import Control.Monad.Trans.Identity
 import Control.Monad.Trans.Reader
 import Control.Monad.Trans.Writer
+import Control.Comonad
+import Control.Comonad.Cofree
 import Control.Comonad.Trans.Env
 import Control.Comonad.Trans.Traced
 
 import Data.Functor.Identity
+import Data.Functor.Coproduct
 import Data.Functor.Compose
+import Data.Functor.Product
 import Data.Functor.Representable
 import Data.Void
 
@@ -82,6 +88,9 @@ tabulateAdjunction f = leftAdjunct f ()
 -- Representable.
 indexAdjunction :: Adjunction f u => u b -> f a -> b
 indexAdjunction = rightAdjunct . const
+
+zapWithAdjunction :: Adjunction f u => (a -> b -> c) -> u a -> f b -> c
+zapWithAdjunction f ua = rightAdjunct (\b -> fmap (flip f b) ua)
 
 splitL :: Adjunction f u => f a -> (a, f ())
 splitL = rightAdjunct (flip leftAdjunct () . (,))
@@ -150,3 +159,17 @@ instance (Adjunction f g, Adjunction f' g') =>
          Adjunction (Compose f' f) (Compose g g') where
   unit   = Compose . leftAdjunct (leftAdjunct Compose) 
   counit = rightAdjunct (rightAdjunct getCompose) . getCompose
+
+instance (Adjunction f g, Adjunction f' g') => 
+         Adjunction (Coproduct f f') (Product g g') where
+  unit a = Pair (leftAdjunct left a) (leftAdjunct right a)
+  counit = coproduct (rightAdjunct fstP) (rightAdjunct sndP)
+    where
+      fstP (Pair x _) = x
+      sndP (Pair _ x) = x
+
+instance Adjunction f u => 
+         Adjunction (Free f) (Cofree u) where
+  unit a = return a :< tabulateAdjunction (\k -> leftAdjunct (wrap . flip unsplitL k) a)
+  counit (Pure a) = extract a
+  counit (Free k) = rightAdjunct (flip indexAdjunction k . unwrap) (extractL k)
