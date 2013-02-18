@@ -36,15 +36,15 @@ library
     transformers           >= 0.2     && < 0.4,
     mtl                    >= 2.0.1   && < 2.2,
     containers             >= 0.3     && < 0.6,
-    comonad                >= 3,
-    contravariant          >= 0.2.0.1,
-    distributive           >= 0.2.2,
-    semigroupoids          >= 3,
-    void                   >= 0.5.5.1,
-    keys                   >= 3,
-    comonad-transformers   >= 3,
-    representable-functors >= 3.0.0.1,
-    free                   >= 3
+    comonad                >= 3       && < 4,
+    contravariant          >= 0.2.0.1 && < 1,
+    distributive           >= 0.2.2   && < 1,
+    semigroupoids          >= 3       && < 4,
+    void                   >= 0.5.5.1 && < 1,
+    keys                   >= 3       && < 4,
+    comonad-transformers   >= 3       && < 4,
+    representable-functors >= 3.0.0.1 && < 4,
+    free                   >= 3       && < 4
 
   exposed-modules:
     Data.Functor.Adjunction
