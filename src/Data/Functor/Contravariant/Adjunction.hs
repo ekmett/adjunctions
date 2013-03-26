@@ -1,13 +1,13 @@
 {-# LANGUAGE Rank2Types, MultiParamTypeClasses, FunctionalDependencies, UndecidableInstances #-}
 module Data.Functor.Contravariant.Adjunction
   ( Adjunction(..)
-  , corepAdjunction
+  , contrarepAdjunction
   , coindexAdjunction
   ) where
 
 import Control.Monad.Instances ()
 import Data.Functor.Contravariant
-import Data.Functor.Corepresentable
+import Data.Functor.Contravariant.Representable
 
 -- | An adjunction from @Hask^op@ to @Hask@
 --
@@ -21,7 +21,7 @@ import Data.Functor.Corepresentable
 -- Any adjunction from @Hask@ to @Hask^op@ would indirectly
 -- permit @unsafePerformIO@, and therefore does not exist.
 
-class (Contravariant f, Corepresentable g) => Adjunction f g | f -> g, g -> f where
+class (Contravariant f, Representable g) => Adjunction f g | f -> g, g -> f where
   unit :: a -> g (f a) -- monad in Hask
   counit :: a -> f (g a) -- comonad in Hask^op
   leftAdjunct  :: (b -> f a) -> a -> g b
@@ -43,8 +43,8 @@ instance Adjunction Predicate Predicate where
   counit = unit
 
 -- | Represent a 'Contravariant' functor that has a left adjoint
-corepAdjunction :: Adjunction f g => (a -> f ()) -> g a
-corepAdjunction = flip leftAdjunct ()
+contrarepAdjunction :: Adjunction f g => (a -> f ()) -> g a
+contrarepAdjunction = flip leftAdjunct ()
 
 coindexAdjunction :: Adjunction f g => g a -> a -> f ()
 coindexAdjunction = rightAdjunct . const
