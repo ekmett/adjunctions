@@ -1,7 +1,6 @@
-{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 -----------------------------------------------------------------------------
 -- |
--- Module      :  Control.Comonad.Trans.Adjoint
 -- Copyright   :  (C) 2011 Edward Kmett
 -- License     :  BSD-style (see the file LICENSE)
 --
