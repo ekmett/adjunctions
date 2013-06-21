@@ -9,7 +9,7 @@ maintainer:    Edward A. Kmett <ekmett@gmail.com>
 stability:     provisional
 homepage:      http://github.com/ekmett/adjunctions/
 bug-reports:   http://github.com/ekmett/adjunctions/issues
-copyright:     Copyright (C) 2011 Edward A. Kmett
+copyright:     Copyright (C) 2011-2013 Edward A. Kmett
 synopsis:      Adjunctions
 description:   Adjunctions
 build-type:    Simple

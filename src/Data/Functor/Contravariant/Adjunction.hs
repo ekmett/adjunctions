@@ -3,6 +3,17 @@
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Trustworthy #-}
 #endif
+-----------------------------------------------------------------------------
+-- |
+-- Copyright   :  (C) 2011-2013 Edward Kmett
+-- License     :  BSD-style (see the file LICENSE)
+--
+-- Maintainer  :  Edward Kmett <ekmett@gmail.com>
+-- Stability   :  provisional
+-- Portability :  MPTCs
+--
+----------------------------------------------------------------------------
+
 module Data.Functor.Contravariant.Adjunction
   ( Adjunction(..)
   , contrarepAdjunction

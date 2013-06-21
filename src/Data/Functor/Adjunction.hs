@@ -10,8 +10,7 @@
 
 -------------------------------------------------------------------------------------------
 -- |
--- Module	: Data.Functor.Adjunction
--- Copyright 	: 2008-2011 Edward Kmett
+-- Copyright 	: 2008-2013 Edward Kmett
 -- License	: BSD
 --
 -- Maintainer	: Edward Kmett <ekmett@gmail.com>
