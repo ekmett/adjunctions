@@ -1,4 +1,8 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE CPP #-}
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
+{-# LANGUAGE Trustworthy #-}
+#endif
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Control.Monad.Contra.Adjoint
@@ -9,7 +13,7 @@
 -- Stability   :  provisional
 -- Portability :  MPTCs, fundeps
 --
--- Use a contravariant adjunction to Hask^op to build a 'Comonad' to 
+-- Use a contravariant adjunction to Hask^op to build a 'Comonad' to
 -- 'Monad' transformer.
 ----------------------------------------------------------------------------
 
@@ -40,7 +44,7 @@ runAdjoint = contramap Identity . runAdjointT
 
 instance (Adjunction f g, Functor w) => Functor (AdjointT f g w) where
   fmap f (AdjointT g) = AdjointT $ contramap (fmap (contramap f)) g
-  
+
 instance (Adjunction f g, Comonad w) => Applicative (AdjointT f g w) where
   pure = AdjointT . leftAdjunct extract
   (<*>) = ap
