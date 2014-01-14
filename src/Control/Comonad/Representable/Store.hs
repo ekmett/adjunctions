@@ -12,8 +12,11 @@
 -- Maintainer  :  ekmett@gmail.com
 -- Stability   :  experimental
 --
--- A generalized Store comonad, parameterized by a Representable functor.
--- The representation of that functor serves as the index of the store.
+-- This is a generalized 'Store' 'Comonad', parameterized by a 'Representable' 'Functor'.
+-- The representation of that 'Functor' serves as the index of the store.
+--
+-- This can be useful if the representable functor serves to memoize its
+-- contents and will be inspected often.
 ----------------------------------------------------------------------
 module Control.Comonad.Representable.Store
    ( Store
