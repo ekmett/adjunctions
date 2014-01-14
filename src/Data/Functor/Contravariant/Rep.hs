@@ -28,6 +28,11 @@ import Data.Proxy
 import Prelude hiding (lookup)
 
 -- | A 'Contravariant' functor @f@ is 'Representable' if 'tabulate' and 'index' witness an isomorphism to @(_ -> Rep f)@.
+--
+-- @
+-- 'tabulate' . 'index' ≡ id
+-- 'index' . 'tabulate' ≡ id
+-- @
 class Contravariant f => Representable f where
   type Rep f :: *
   -- |
@@ -36,11 +41,11 @@ class Contravariant f => Representable f where
   -- @
   tabulate :: (a -> Rep f) -> f a
 
-  index :: f a -> a -> Rep f
+  index    :: f a -> a -> Rep f
 
   -- |
   -- @
-  -- 'contramapWithRep' f p ≡ 'tabulate' $ 'either (index p) 'id' . f
+  -- 'contramapWithRep' f p ≡ 'tabulate' $ 'either' ('index' p) 'id' . f
   -- @
   contramapWithRep :: (b -> Either a (Rep f)) -> f a -> f b
   contramapWithRep f p = tabulate $ either (index p) id . f

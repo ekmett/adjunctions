@@ -22,11 +22,7 @@ module Control.Comonad.Representable.Store
    , StoreT(..)
    , storeT
    , runStoreT
-   , pos
-   , peek
-   , peeks
-   , seek
-   , seeks
+   , ComonadStore(..)
    ) where
 
 import Control.Applicative

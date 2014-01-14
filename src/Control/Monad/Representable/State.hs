@@ -31,10 +31,7 @@ module Control.Monad.Representable.State
    , mapStateT
    , liftCallCC
    , liftCallCC'
-   , get
-   , gets
-   , put
-   , modify
+   , MonadState(..)
    ) where
 
 import Control.Applicative

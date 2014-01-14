@@ -17,11 +17,11 @@
 module Control.Monad.Representable.Reader
   (
   -- * Representable functor monad
-    Reader, runReader
+    Reader
+  , runReader
   -- * Monad Transformer
   , ReaderT(..), readerT, runReaderT
-  , ask
-  , local
+  , MonadReader(..)
   , module Data.Functor.Rep
   ) where
 
