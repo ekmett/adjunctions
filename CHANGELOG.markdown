@@ -4,7 +4,8 @@
 * Removed the dependency on `keys`.
 * Moved `Data.Functor.Contravariant.Representable` to `Data.Functor.Contravariant.Rep` and made the API mimic `Data.Profunctor.Rep`.
 * Moved `Data.Functor.Representable` to `Data.Functor.Rep` and made the API mimic `Data.Profunctor.Rep`.
-* Added a `Proxy` instance to `Data.Functor.Contravariant.Rep.Representable`
+* Added `Tagged` and `Proxy` instances for `Data.Functor.Rep.Representable`
+* Added a `Proxy` instance for `Data.Functor.Contravariant.Rep.Representable`
 
 3.2.1.1
 -------
