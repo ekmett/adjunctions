@@ -10,8 +10,8 @@
 -- Maintainer  :  ekmett@gmail.com
 -- Stability   :  experimental
 --
--- Representable functors on Hask all monads, being isomorphic to
--- a reader monad.
+-- Representable functors on Hask are all monads, because they are isomorphic to
+-- a 'Reader' monad.
 ----------------------------------------------------------------------
 
 module Control.Monad.Representable.Reader
