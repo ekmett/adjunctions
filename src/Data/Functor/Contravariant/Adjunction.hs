@@ -22,7 +22,7 @@ module Data.Functor.Contravariant.Adjunction
 
 import Control.Monad.Instances ()
 import Data.Functor.Contravariant
-import Data.Functor.Contravariant.Representable
+import Data.Functor.Contravariant.Rep
 
 -- | An adjunction from @Hask^op@ to @Hask@
 --

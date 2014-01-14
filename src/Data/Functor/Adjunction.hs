@@ -46,7 +46,7 @@ import Data.Functor.Identity
 import Data.Functor.Coproduct
 import Data.Functor.Compose
 import Data.Functor.Product
-import Data.Functor.Representable
+import Data.Functor.Rep
 import Data.Void
 
 -- | An adjunction between Hask and Hask.
