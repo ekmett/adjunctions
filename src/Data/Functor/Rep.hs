@@ -62,9 +62,12 @@ import Data.Functor.Identity
 import Data.Functor.Compose
 import Data.Functor.Extend
 import Data.Functor.Product
+import Data.Proxy
 import Data.Sequence (Seq)
 import qualified Data.Sequence as Seq
 import Data.Semigroup hiding (Product)
+import Data.Tagged
+import Data.Void
 import Prelude hiding (lookup)
 
 -- | A 'Functor' @f@ is 'Representable' if 'tabulate' and 'index' witness an isomorphism to @(->) x@.
@@ -131,10 +134,20 @@ extractRep fa = index fa mempty
 
 -- * Instances
 
+instance Representable Proxy where
+  type Rep Proxy = Void
+  index Proxy = absurd
+  tabulate f = Proxy
+
 instance Representable Identity where
   type Rep Identity = ()
   index (Identity a) () = a
   tabulate f = Identity (f ())
+
+instance Representable (Tagged t) where
+  type Rep (Tagged t) = ()
+  index (Tagged a) () = a
+  tabulate f = Tagged (f ())
 
 instance Representable m => Representable (IdentityT m) where
   type Rep (IdentityT m) = Rep m

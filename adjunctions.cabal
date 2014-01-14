@@ -45,7 +45,7 @@ library
     comonad       >= 4       && < 5,
     containers    >= 0.3     && < 0.6,
     contravariant >= 0.2.0.1 && < 1,
-    distributive  >= 0.2.2   && < 1,
+    distributive  >= 0.4     && < 1,
     free          >= 4       && < 5,
     mtl           >= 2.0.1   && < 2.2,
     tagged        >= 0.7     && < 1,
