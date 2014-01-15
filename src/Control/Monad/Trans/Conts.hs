@@ -18,7 +18,7 @@
 ----------------------------------------------------------------------------
 
 module Control.Monad.Trans.Conts
-  ( 
+  (
   -- * Continuation passing style
     Cont
   , cont
@@ -63,7 +63,7 @@ instance Functor w => Functor (ContsT r w m) where
 
 instance Comonad w => Apply (ContsT r w m) where
   (<.>) = ap
-  
+
 instance Comonad w => Applicative (ContsT r w m) where
   pure x = ContsT $ \f -> extract f x
   (<*>) = ap
@@ -77,8 +77,8 @@ callCC f = ContsT $ \wamr -> runContsT (f (\a -> ContsT $ \_ -> extract wamr a))
 
 {-
 callCCs :: Comonad w => (w (a -> ContsT r w m b) -> ContsT r w m a) -> ContsT r w m a
-callCCs f = 
+callCCs f =
 -}
 
 instance Comonad w => MonadTrans (ContsT r w) where
-  lift m = ContsT $ extract . fmap (m >>=) 
+  lift m = ContsT $ extract . fmap (m >>=)

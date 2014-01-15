@@ -50,12 +50,12 @@ instance (Adjunction f g, Extend w) => Extend (AdjointT f g w) where
 instance (Adjunction f g, Comonad w) => Comonad (AdjointT f g w) where
   extend f (AdjointT m) = AdjointT $ fmap (extend $ leftAdjunct (f . AdjointT)) m
   extract = rightAdjunct extract . runAdjointT
-  
+
 {-
 instance (Adjunction f g, Monad m) => Applicative (AdjointT f g m) where
   pure = AdjointT . leftAdjunct return
   (<*>) = ap
 -}
-    
+
 instance (Adjunction f g, Distributive g) => ComonadTrans (AdjointT f g) where
-  lower = counit . fmap distribute . runAdjointT 
+  lower = counit . fmap distribute . runAdjointT

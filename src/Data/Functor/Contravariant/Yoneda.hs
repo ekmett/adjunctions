@@ -30,12 +30,12 @@ import Text.Read hiding (lift)
 
 -- | The covariant Yoneda lemma applied to a contravariant functor
 
-newtype YonedaT f a = YonedaT { runYonedaT :: forall b. (b -> a) -> f b } 
+newtype YonedaT f a = YonedaT { runYonedaT :: forall b. (b -> a) -> f b }
 
-liftYonedaT :: Contravariant f => f a -> YonedaT f a 
+liftYonedaT :: Contravariant f => f a -> YonedaT f a
 liftYonedaT a = YonedaT (\f -> contramap f a)
 
-lowerYonedaT :: YonedaT f a -> f a 
+lowerYonedaT :: YonedaT f a -> f a
 lowerYonedaT (YonedaT f) = f id
 
 instance Contravariant (YonedaT f) where
