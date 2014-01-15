@@ -137,7 +137,7 @@ extractRep fa = index fa mempty
 instance Representable Proxy where
   type Rep Proxy = Void
   index Proxy = absurd
-  tabulate f = Proxy
+  tabulate _ = Proxy
 
 instance Representable Identity where
   type Rep Identity = ()
