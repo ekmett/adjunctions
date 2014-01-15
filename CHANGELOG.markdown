@@ -1,3 +1,7 @@
+4.0.1
+-----
+* Increased lower bound on `contravariant` to match the actual requirement.
+
 4.0
 ---
 * Merged the contents of `representable-functors`.
