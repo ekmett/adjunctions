@@ -77,9 +77,9 @@ import Prelude hiding (lookup)
 -- Every 'Representable' 'Functor' from Hask to Hask is a right adjoint.
 --
 -- @
--- 'tabulate' . 'index'    ≡ id
--- 'index' . 'tabulate'    ≡ id
--- 'tabulate' . 'return' f ≡ 'return' f
+-- 'tabulate' . 'index'  ≡ id
+-- 'index' . 'tabulate'  ≡ id
+-- 'tabulate' . 'return' ≡ 'return'
 -- @
 
 class Distributive f => Representable f where
