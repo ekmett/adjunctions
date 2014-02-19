@@ -47,6 +47,10 @@ module Data.Functor.Rep
   , duplicateRep
   , extendRep
   , extractRep
+  -- ** Comonad, with user-specified monoid
+  , duplicateRepBy
+  , extendRepBy
+  , extractRepBy
   ) where
 
 import Control.Applicative
@@ -117,20 +121,29 @@ apRep f g = tabulate (index f <*> index g)
 distributeRep :: (Representable f, Functor w) => w (f a) -> f (w a)
 distributeRep wf = tabulate (\k -> fmap (`index` k) wf)
 
+duplicateRepBy :: (Representable f) => (Rep f -> Rep f -> Rep f) -> f a -> f (f a)
+duplicateRepBy plus w = tabulate (\m -> tabulate (index w . plus m))
+
+extendRepBy :: (Representable f) => (Rep f -> Rep f -> Rep f) -> (f a -> b) -> f a -> f b
+extendRepBy plus f w = tabulate (\m -> f (tabulate (index w . plus m)))
+
+extractRepBy :: (Representable f) => (Rep f) -> f a -> a
+extractRepBy = flip index
+
 duplicatedRep :: (Representable f, Semigroup (Rep f)) => f a -> f (f a)
-duplicatedRep w = tabulate (\m -> tabulate (index w . (<>) m))
+duplicatedRep = duplicateRepBy (<>)
 
 extendedRep :: (Representable f, Semigroup (Rep f)) => (f a -> b) -> f a -> f b
-extendedRep f w = tabulate (\m -> f (tabulate (index w . (<>) m)))
+extendedRep = extendRepBy (<>)
 
 duplicateRep :: (Representable f, Monoid (Rep f)) => f a -> f (f a)
-duplicateRep w = tabulate (\m -> tabulate (index w . mappend m))
+duplicateRep = duplicateRepBy mappend
 
 extendRep :: (Representable f, Monoid (Rep f)) => (f a -> b) -> f a -> f b
-extendRep f w = tabulate (\m -> f (tabulate (index w . mappend m)))
+extendRep = extendRepBy mappend
 
 extractRep :: (Representable f, Monoid (Rep f)) => f a -> a
-extractRep fa = index fa mempty
+extractRep = extractRepBy mempty
 
 -- * Instances
 
