@@ -30,6 +30,8 @@ module Data.Functor.Rep
   , fmapRep
   -- ** Distributive
   , distributeRep
+  -- ** Foldable
+  , foldMapRepBy
   -- ** Apply/Applicative
   , apRep
   , pureRep
@@ -61,6 +63,7 @@ import Control.Comonad.Cofree
 import Control.Monad.Trans.Identity
 import Control.Monad.Reader
 import Data.Distributive
+import Data.Foldable
 import Data.Functor.Bind
 import Data.Functor.Identity
 import Data.Functor.Compose
@@ -120,6 +123,9 @@ apRep f g = tabulate (index f <*> index g)
 
 distributeRep :: (Representable f, Functor w) => w (f a) -> f (w a)
 distributeRep wf = tabulate (\k -> fmap (`index` k) wf)
+
+foldMapRepBy :: (Representable f, Monoid m) => [Rep f] -> (a -> m) -> f a -> m
+foldMapRepBy rs f x = foldMap (f . index x) rs
 
 duplicateRepBy :: (Representable f) => (Rep f -> Rep f -> Rep f) -> f a -> f (f a)
 duplicateRepBy plus w = tabulate (\m -> tabulate (index w . plus m))
