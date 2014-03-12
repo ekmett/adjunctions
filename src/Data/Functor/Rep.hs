@@ -135,13 +135,13 @@ apRep f g = tabulate (index f <*> index g)
 distributeRep :: (Representable f, Functor w) => w (f a) -> f (w a)
 distributeRep wf = tabulate (\k -> fmap (`index` k) wf)
 
-duplicateRepBy :: (Representable f) => (Rep f -> Rep f -> Rep f) -> f a -> f (f a)
+duplicateRepBy :: Representable f => (Rep f -> Rep f -> Rep f) -> f a -> f (f a)
 duplicateRepBy plus w = tabulate (\m -> tabulate (index w . plus m))
 
-extendRepBy :: (Representable f) => (Rep f -> Rep f -> Rep f) -> (f a -> b) -> f a -> f b
+extendRepBy :: Representable f => (Rep f -> Rep f -> Rep f) -> (f a -> b) -> f a -> f b
 extendRepBy plus f w = tabulate (\m -> f (tabulate (index w . plus m)))
 
-extractRepBy :: (Representable f) => (Rep f) -> f a -> a
+extractRepBy :: Representable f => (Rep f) -> f a -> a
 extractRepBy = flip index
 
 duplicatedRep :: (Representable f, Semigroup (Rep f)) => f a -> f (f a)
