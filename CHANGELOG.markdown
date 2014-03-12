@@ -1,3 +1,8 @@
+4.0.2
+-----
+* Added `mfixRep` to make it easier to define representable `MonadFix` instances.
+* Added `mzipRep` and `mzipWithRep` to make it easier to define representable `MonadZip` instances.
+
 4.0.1
 -----
 * Increased lower bound on `contravariant` to match the actual requirement.
