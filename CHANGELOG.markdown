@@ -2,6 +2,8 @@
 -----
 * Added `mfixRep` to make it easier to define representable `MonadFix` instances.
 * Added `mzipRep` and `mzipWithRep` to make it easier to define representable `MonadZip` instances.
+* Added `duplicateRepBy`, `extendRepBy` and `extractRepBy` to make it easier to pick your own `Monoid`.
+* Minor documentation fixes.
 
 4.0.1
 -----
