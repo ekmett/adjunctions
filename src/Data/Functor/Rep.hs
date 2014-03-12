@@ -37,6 +37,11 @@ module Data.Functor.Rep
   , liftR3
   -- ** Bind/Monad
   , bindRep
+  -- ** MonadFix
+  , mfixRep
+  -- ** MonadZip
+  , mzipRep
+  , mzipWithRep
   -- ** MonadReader
   , askRep
   , localRep
@@ -108,6 +113,15 @@ pureRep = tabulate . const
 
 bindRep :: Representable f => f a -> (a -> f b) -> f b
 bindRep m f = tabulate $ \a -> index (f (index m a)) a
+
+mfixRep :: Representable f => (a -> f a) -> f a
+mfixRep = tabulate . mfix . fmap index
+
+mzipWithRep :: Representable f => (a -> b -> c) -> f a -> f b -> f c
+mzipWithRep f as bs = tabulate $ \k -> f (index as k) (index bs k)
+
+mzipRep :: Representable f => f a -> f b -> f (a, b)
+mzipRep as bs = tabulate $ \k -> (index as k, index bs k)
 
 askRep :: Representable f => f (Rep f)
 askRep = tabulate id
