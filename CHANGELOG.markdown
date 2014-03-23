@@ -1,3 +1,7 @@
+4.0.3
+-----
+* Silenced `Control.Monad.Instances` deprecation warnings on GHC 7.8
+
 4.0.2
 -----
 * Added `mfixRep` to make it easier to define representable `MonadFix` instances.
