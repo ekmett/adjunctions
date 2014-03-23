@@ -20,7 +20,9 @@ module Data.Functor.Contravariant.Adjunction
   , coindexAdjunction
   ) where
 
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 707
 import Control.Monad.Instances ()
+#endif
 import Data.Functor.Contravariant
 import Data.Functor.Contravariant.Rep
 

@@ -33,7 +33,9 @@ module Data.Functor.Adjunction
 import Control.Applicative
 import Control.Arrow ((&&&), (|||))
 import Control.Monad.Free
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 707
 import Control.Monad.Instances ()
+#endif
 import Control.Monad.Trans.Identity
 import Control.Monad.Trans.Reader
 import Control.Monad.Trans.Writer
