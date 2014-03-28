@@ -53,7 +53,8 @@ library
     semigroupoids >= 4       && < 5,
     semigroups    >= 0.11    && < 1,
     transformers  >= 0.2     && < 0.5,
-    void          >= 0.5.5.1 && < 1
+    void          >= 0.5.5.1 && < 1,
+    template-haskell >= 2.7  && < 3.0
 
   exposed-modules:
     Control.Comonad.Representable.Store
@@ -67,5 +68,6 @@ library
     Data.Functor.Contravariant.Adjunction
     Data.Functor.Contravariant.Rep
     Data.Functor.Rep
+    Data.Functor.Rep.TH
 
   ghc-options: -Wall
