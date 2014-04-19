@@ -60,6 +60,7 @@ module Data.Functor.Rep
   ) where
 
 import Control.Applicative
+import Control.Arrow ((&&&))
 import Control.Comonad
 import Control.Comonad.Trans.Class
 import Control.Comonad.Trans.Traced
@@ -133,7 +134,7 @@ mzipWithRep :: Representable f => (a -> b -> c) -> f a -> f b -> f c
 mzipWithRep f as bs = tabulate $ \k -> f (index as k) (index bs k)
 
 mzipRep :: Representable f => f a -> f b -> f (a, b)
-mzipRep as bs = tabulate $ \k -> (index as k, index bs k)
+mzipRep as bs = tabulate (index as &&& index bs)
 
 askRep :: Representable f => f (Rep f)
 askRep = tabulate id
