@@ -23,6 +23,7 @@ module Data.Functor.Rep
   (
   -- * Representable Functors
     Representable(..)
+  , tabulated
   -- * Wrapped representable functors
   , Co(..)
   -- * Default definitions
@@ -71,6 +72,7 @@ import Data.Functor.Identity
 import Data.Functor.Compose
 import Data.Functor.Extend
 import Data.Functor.Product
+import Data.Profunctor
 import Data.Proxy
 import Data.Sequence (Seq)
 import qualified Data.Sequence as Seq
@@ -102,6 +104,16 @@ class Distributive f => Representable f where
 
 {-# RULES
 "tabulate/index" forall t. tabulate (index t) = t #-}
+
+-- | 'tabulate' and 'index' form two halves of an isomorphism.
+--
+-- This can be used with the combinators from the @lens@ package.
+--
+-- @'tabulated' :: 'Representable' f => 'Iso'' ('Rep' f -> a) (f a)@
+tabulated :: (Representable f, Representable g, Profunctor p, Functor h) 
+          => p (f a) (h (g b)) -> p (Rep f -> a) (h (Rep g -> b))
+tabulated = dimap tabulate (fmap index)
+{-# INLINE tabulated #-}
 
 -- * Default definitions
 

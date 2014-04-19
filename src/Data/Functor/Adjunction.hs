@@ -20,6 +20,7 @@
 -------------------------------------------------------------------------------------------
 module Data.Functor.Adjunction
   ( Adjunction(..)
+  , adjuncted
   , tabulateAdjunction
   , indexAdjunction
   , zapWithAdjunction
@@ -49,6 +50,7 @@ import Data.Functor.Coproduct
 import Data.Functor.Compose
 import Data.Functor.Product
 import Data.Functor.Rep
+import Data.Profunctor
 import Data.Void
 
 -- | An adjunction between Hask and Hask.
@@ -79,6 +81,16 @@ class (Functor f, Representable u) =>
   counit         = rightAdjunct id
   leftAdjunct f  = fmap f . unit
   rightAdjunct f = counit . fmap f
+
+-- | 'leftAdjunct' and 'rightAdjunct' form two halves of an isomorphism.
+--
+-- This can be used with the combinators from the @lens@ package.
+--
+-- @'adjuncted' :: 'Adjunction' f u => 'Iso'' (f a -> b) (a -> u b)@
+adjuncted :: (Adjunction f u, Profunctor p, Functor g) 
+          => p (a -> u b) (g (c -> u d)) -> p (f a -> b) (g (f c -> d))
+adjuncted = dimap leftAdjunct (fmap rightAdjunct)
+{-# INLINE adjuncted #-}
 
 -- | Every right adjoint is representable by its left adjoint
 -- applied to a unit element

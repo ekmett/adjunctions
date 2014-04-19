@@ -16,6 +16,7 @@ module Data.Functor.Contravariant.Rep
   (
   -- * Representable Contravariant Functors
     Representable(..)
+  , tabulated
   -- * Default definitions
   , contramapRep
   ) where
@@ -24,6 +25,7 @@ import Control.Monad.Reader
 import Data.Functor.Contravariant
 import Data.Functor.Contravariant.Day
 import Data.Functor.Product
+import Data.Profunctor
 import Data.Proxy
 import Prelude hiding (lookup)
 
@@ -49,6 +51,19 @@ class Contravariant f => Representable f where
   -- @
   contramapWithRep :: (b -> Either a (Rep f)) -> f a -> f b
   contramapWithRep f p = tabulate $ either (index p) id . f
+
+{-# RULES
+"tabulate/index" forall t. tabulate (index t) = t #-}
+
+-- | 'tabulate' and 'index' form two halves of an isomorphism.
+--
+-- This can be used with the combinators from the @lens@ package.
+--
+-- @'tabulated' :: 'Representable' f => 'Iso'' (a -> 'Rep' f) (f a)@
+tabulated :: (Representable f, Representable g, Profunctor p, Functor h) 
+          => p (f a) (h (g b)) -> p (a -> Rep f) (h (b -> Rep g))
+tabulated = dimap tabulate (fmap index)
+{-# INLINE tabulated #-}
 
 contramapRep :: Representable f => (a -> b) -> f b -> f a
 contramapRep f = tabulate . (. f) . index
