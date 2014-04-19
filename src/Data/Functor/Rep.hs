@@ -23,6 +23,7 @@ module Data.Functor.Rep
   (
   -- * Representable Functors
     Representable(..)
+  , tabulated
   -- * Wrapped representable functors
   , Co(..)
   -- * Default definitions
@@ -59,6 +60,7 @@ module Data.Functor.Rep
   ) where
 
 import Control.Applicative
+import Control.Arrow ((&&&))
 import Control.Comonad
 import Control.Comonad.Trans.Class
 import Control.Comonad.Trans.Traced
@@ -71,6 +73,7 @@ import Data.Functor.Identity
 import Data.Functor.Compose
 import Data.Functor.Extend
 import Data.Functor.Product
+import Data.Profunctor
 import Data.Proxy
 import Data.Sequence (Seq)
 import qualified Data.Sequence as Seq
@@ -103,6 +106,16 @@ class Distributive f => Representable f where
 {-# RULES
 "tabulate/index" forall t. tabulate (index t) = t #-}
 
+-- | 'tabulate' and 'index' form two halves of an isomorphism.
+--
+-- This can be used with the combinators from the @lens@ package.
+--
+-- @'tabulated' :: 'Representable' f => 'Iso'' ('Rep' f -> a) (f a)@
+tabulated :: (Representable f, Representable g, Profunctor p, Functor h) 
+          => p (f a) (h (g b)) -> p (Rep f -> a) (h (Rep g -> b))
+tabulated = dimap tabulate (fmap index)
+{-# INLINE tabulated #-}
+
 -- * Default definitions
 
 fmapRep :: Representable f => (a -> b) -> f a -> f b
@@ -121,7 +134,7 @@ mzipWithRep :: Representable f => (a -> b -> c) -> f a -> f b -> f c
 mzipWithRep f as bs = tabulate $ \k -> f (index as k) (index bs k)
 
 mzipRep :: Representable f => f a -> f b -> f (a, b)
-mzipRep as bs = tabulate $ \k -> (index as k, index bs k)
+mzipRep as bs = tabulate (index as &&& index bs)
 
 askRep :: Representable f => f (Rep f)
 askRep = tabulate id
