@@ -1,3 +1,7 @@
+4.2
+---
+* `contravariant` 1.0 support. `Day` convolution moves to `kan-extensions`.
+
 4.0.3
 -----
 * Silenced `Control.Monad.Instances` deprecation warnings on GHC 7.8

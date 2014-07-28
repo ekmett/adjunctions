@@ -23,7 +23,6 @@ module Data.Functor.Contravariant.Rep
 
 import Control.Monad.Reader
 import Data.Functor.Contravariant
-import Data.Functor.Contravariant.Day
 import Data.Functor.Product
 import Data.Profunctor
 import Data.Proxy
@@ -73,17 +72,6 @@ instance Representable Proxy where
   tabulate _ = Proxy
   index Proxy _ = ()
   contramapWithRep _ Proxy = Proxy
-
-instance (Representable f, Representable g) => Representable (Day f g) where
-  type Rep (Day f g) = (Rep f, Rep g)
-  tabulate a2fg = Day (tabulate fst) (tabulate snd) $ \a -> let b = a2fg a in (b,b)
-  index (Day fb gc abc) a = case abc a of
-    (b, c) -> (index fb b, index gc c)
-  contramapWithRep d2eafg (Day fb gc abc) = Day (contramapWithRep id fb) (contramapWithRep id gc) $ \d -> case d2eafg d of
-    Left a -> case abc a of
-      (b, c) -> (Left b, Left c)
-    Right (vf, vg) -> (Right vf, Right vg)
-  {-# INLINE tabulate #-}
 
 instance Representable (Op r) where
   type Rep (Op r) = r
