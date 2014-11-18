@@ -5,6 +5,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DefaultSignatures #-}
 {-# OPTIONS_GHC -fenable-rewrite-rules #-}
 ----------------------------------------------------------------------
 -- |
@@ -81,6 +82,7 @@ import Data.Semigroup hiding (Product)
 import Data.Tagged
 import Data.Void
 import Prelude hiding (lookup)
+import qualified GHC.Generics as Gen
 
 -- | A 'Functor' @f@ is 'Representable' if 'tabulate' and 'index' witness an isomorphism to @(->) x@.
 --
@@ -96,12 +98,21 @@ import Prelude hiding (lookup)
 
 class Distributive f => Representable f where
   type Rep f :: *
+  type Rep f = Rep (Gen.Rep1 f)
+
   -- |
   -- @
   -- 'fmap' f . 'tabulate' ≡ 'tabulate' . 'fmap' f
   -- @
   tabulate :: (Rep f -> a) -> f a
+  default tabulate :: (Gen.Generic1 f, Rep (Gen.Rep1 f) ~ Rep f, Representable (Gen.Rep1 f))
+                   => (Rep f -> a) -> f a
+  tabulate = Gen.to1 . tabulate
+
   index    :: f a -> Rep f -> a
+  default index :: (Gen.Generic1 f, Rep (Gen.Rep1 f) ~ Rep f, Representable (Gen.Rep1 f))
+                => f a -> Rep f -> a
+  index = index . Gen.from1
 
 {-# RULES
 "tabulate/index" forall t. tabulate (index t) = t #-}
