@@ -94,6 +94,7 @@ import Data.Tagged
 import Data.Void
 import GHC.Generics hiding (Rep)
 import Prelude hiding (lookup)
+import qualified GHC.Generics as Gen
 
 -- | A 'Functor' @f@ is 'Representable' if 'tabulate' and 'index' witness an isomorphism to @(->) x@.
 --
@@ -109,6 +110,8 @@ import Prelude hiding (lookup)
 
 class Distributive f => Representable f where
   type Rep f :: *
+  type Rep f = Rep (Gen.Rep1 f)
+
   -- |
   -- @
   -- 'fmap' f . 'tabulate' ≡ 'tabulate' . 'fmap' f
