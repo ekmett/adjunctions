@@ -94,7 +94,7 @@ import Prelude hiding (lookup)
 -- 'tabulate' . 'return' ≡ 'return'
 -- @
 
-class Distributive f => Representable f where
+class Functor f => Representable f where
   type Rep f :: *
   -- |
   -- @
@@ -111,7 +111,7 @@ class Distributive f => Representable f where
 -- This can be used with the combinators from the @lens@ package.
 --
 -- @'tabulated' :: 'Representable' f => 'Iso'' ('Rep' f -> a) (f a)@
-tabulated :: (Representable f, Representable g, Profunctor p, Functor h) 
+tabulated :: (Representable f, Representable g, Profunctor p, Functor h)
           => p (f a) (h (g b)) -> p (Rep f -> a) (h (Rep g -> b))
 tabulated = dimap tabulate (fmap index)
 {-# INLINE tabulated #-}

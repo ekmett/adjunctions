@@ -1,3 +1,7 @@
+4.3
+---
+* Changed the superclass constraint of `Representable` from `Distributive` to just `Functor`.
+
 4.2
 ---
 * `contravariant` 1.0 support. `Day` convolution moves to `kan-extensions`.
