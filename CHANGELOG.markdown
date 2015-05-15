@@ -1,3 +1,8 @@
+4.2.1
+-----
+* `semigroupoids` 5 support.
+* `profunctors` 5 support.
+
 4.2
 ---
 * `contravariant` 1.0 support. `Day` convolution moves to `kan-extensions`.
