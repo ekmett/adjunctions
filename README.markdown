@@ -1,7 +1,7 @@
 adjunctions
 ==========
 
-[![Build Status](https://secure.travis-ci.org/ekmett/adjunctions.png?branch=master)](http://travis-ci.org/ekmett/adjunctions)
+[![Hackage](https://img.shields.io/hackage/v/adjunctions.svg)](https://hackage.haskell.org/package/adjunctions) [![Build Status](https://secure.travis-ci.org/ekmett/adjunctions.png?branch=master)](http://travis-ci.org/ekmett/adjunctions
 
 This package provides adjunctions for Haskell.
 
