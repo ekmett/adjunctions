@@ -1,6 +1,6 @@
-{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE CPP #-}
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
+{-# LANGUAGE MultiParamTypeClasses #-}
+#if __GLASGOW_HASKELL__ >= 702 && __GLASGOW_HASKELL__ < 710
 {-# LANGUAGE Trustworthy #-}
 #endif
 -----------------------------------------------------------------------------
@@ -35,7 +35,9 @@ module Control.Monad.Trans.Contravariant.Adjoint
   ) where
 
 import Prelude hiding (sequence)
+#if __GLASGOW_HASKELL__ < 710
 import Control.Applicative
+#endif
 import Control.Comonad
 import Control.Monad (ap)
 import Data.Functor.Identity

@@ -4,7 +4,7 @@
            , UndecidableInstances #-}
 
 {-# LANGUAGE CPP #-}
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
+#if __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Trustworthy #-}
 #endif
 
@@ -31,10 +31,12 @@ module Data.Functor.Adjunction
   , splitL, unsplitL
   ) where
 
+#if __GLASGOW_HASKELL__ < 710
 import Control.Applicative
+#endif
 import Control.Arrow ((&&&), (|||))
 import Control.Monad.Free
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 707
+#if __GLASGOW_HASKELL__ < 707
 import Control.Monad.Instances ()
 #endif
 import Control.Monad.Trans.Identity

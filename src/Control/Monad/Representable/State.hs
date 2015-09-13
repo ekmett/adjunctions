@@ -34,7 +34,10 @@ module Control.Monad.Representable.State
    , MonadState(..)
    ) where
 
+#if __GLASGOW_HASKELL__ < 710
 import Control.Applicative
+#endif
+import Control.Monad
 import Data.Functor.Bind
 import Data.Functor.Bind.Trans
 import Control.Monad.State.Class
@@ -43,7 +46,7 @@ import Control.Monad.Reader.Class
 import Control.Monad.Writer.Class
 import Control.Monad.Free.Class
 import Control.Monad.Trans.Class
-import Control.Monad.Identity
+import Data.Functor.Identity
 import Data.Functor.Rep
 
 -- ---------------------------------------------------------------------------

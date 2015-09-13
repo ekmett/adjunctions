@@ -1,8 +1,9 @@
-{-# LANGUAGE TypeFamilies
-           , FlexibleContexts
-           , FlexibleInstances
-           , MultiParamTypeClasses
-           , UndecidableInstances #-}
+{-# LANGUAGE CPP #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE UndecidableInstances #-}
 ----------------------------------------------------------------------
 -- |
 -- Module      :  Control.Comonad.Representable.Store
@@ -28,7 +29,9 @@ module Control.Comonad.Representable.Store
    , ComonadStore(..)
    ) where
 
+#if __GLASGOW_HASKELL__ < 710
 import Control.Applicative
+#endif
 import Control.Comonad
 import Control.Comonad.Cofree.Class
 import Control.Comonad.Env.Class
