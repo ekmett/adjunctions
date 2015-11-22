@@ -248,7 +248,7 @@ instance Representable f => Bind (Co f) where
   (>>-) = bindRep
 
 instance Representable f => Monad (Co f) where
-  return = pureRep
+  return = pure
   (>>=) = bindRep
 
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 704

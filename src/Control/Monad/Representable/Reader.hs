@@ -77,7 +77,9 @@ instance (Representable f, Bind m) => Bind (ReaderT f m) where
   ReaderT fm >>- f = ReaderT $ tabulate (\a -> index fm a >>- flip index a . getReaderT . f)
 
 instance (Representable f, Monad m) => Monad (ReaderT f m) where
+#if __GLASGOW_HASKELL__ < 710
   return = ReaderT . pureRep . return
+#endif
   ReaderT fm >>= f = ReaderT $ tabulate (\a -> index fm a >>= flip index a . getReaderT . f)
 
 #if __GLASGOW_HASKELL >= 704
