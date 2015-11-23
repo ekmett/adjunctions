@@ -147,7 +147,9 @@ instance (Representable g, Bind m) => Bind (StateT g m) where
   StateT m >>- f = StateT $ fmap (>>- rightAdjunctRep (runStateT . f)) m
 
 instance (Representable g, Monad m) => Monad (StateT g m) where
+#if __GLASGOW_VERSION__ < 710
   return = StateT . leftAdjunctRep return
+#endif
   StateT m >>= f = StateT $ fmap (>>= rightAdjunctRep (runStateT . f)) m
 
 instance Representable f => BindTrans (StateT f) where

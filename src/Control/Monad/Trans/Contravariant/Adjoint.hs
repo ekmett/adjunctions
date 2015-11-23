@@ -62,5 +62,5 @@ instance (Adjunction f g, Comonad w) => Applicative (AdjointT f g w) where
   (<*>) = ap
 
 instance (Adjunction f g, Comonad w) => Monad (AdjointT f g w) where
-  return = AdjointT . leftAdjunct extract
+  return = pure
   AdjointT m >>= f = AdjointT $ contramap (extend (rightAdjunct (runAdjointT . f))) m

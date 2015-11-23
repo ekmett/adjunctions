@@ -50,7 +50,7 @@ instance (Adjunction f g, Monad m) => Applicative (AdjointT f g m) where
   (<*>) = ap
 
 instance (Adjunction f g, Monad m) => Monad (AdjointT f g m) where
-  return = AdjointT . leftAdjunct return
+  return = pure
   AdjointT m >>= f = AdjointT $ fmap (>>= rightAdjunct (runAdjointT . f)) m
 
 -- | Exploiting this instance requires that we have the missing Traversables for Identity, (,)e and IdentityT
