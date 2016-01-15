@@ -67,12 +67,17 @@ import Control.Comonad.Trans.Traced
 import Control.Comonad.Cofree
 import Control.Monad.Trans.Identity
 import Control.Monad.Reader
+#if MIN_VERSION_base(4,4,0)
+import Data.Complex
+#endif
 import Data.Distributive
 import Data.Functor.Bind
 import Data.Functor.Identity
 import Data.Functor.Compose
 import Data.Functor.Extend
 import Data.Functor.Product
+import qualified Data.Monoid as Monoid
+import Data.Orphans ()
 import Data.Profunctor
 import Data.Proxy
 import Data.Sequence (Seq)
@@ -111,7 +116,7 @@ class Distributive f => Representable f where
 -- This can be used with the combinators from the @lens@ package.
 --
 -- @'tabulated' :: 'Representable' f => 'Iso'' ('Rep' f -> a) (f a)@
-tabulated :: (Representable f, Representable g, Profunctor p, Functor h) 
+tabulated :: (Representable f, Representable g, Profunctor p, Functor h)
           => p (f a) (h (g b)) -> p (Rep f -> a) (h (Rep g -> b))
 tabulated = dimap tabulate (fmap index)
 {-# INLINE tabulated #-}
@@ -226,6 +231,28 @@ instance Representable f => Representable (Cofree f) where
       Seq.EmptyL -> a
       k Seq.:< ks -> index (index as k) ks
   tabulate f = f Seq.empty :< tabulate (\k -> tabulate (f . (k Seq.<|)))
+
+instance Representable Monoid.Dual where
+  type Rep Monoid.Dual = ()
+  index (Monoid.Dual d) () = d
+  tabulate f = Monoid.Dual (f ())
+
+instance Representable Monoid.Product where
+  type Rep Monoid.Product = ()
+  index (Monoid.Product p) () = p
+  tabulate f = Monoid.Product (f ())
+
+instance Representable Monoid.Sum where
+  type Rep Monoid.Sum = ()
+  index (Monoid.Sum s) () = s
+  tabulate f = Monoid.Sum (f ())
+
+#if MIN_VERSION_base(4,4,0)
+instance Representable Complex where
+  type Rep Complex = Bool
+  index (r :+ i) key = if key then i else r
+  tabulate f = f False :+ f True
+#endif
 
 newtype Co f a = Co { unCo :: f a } deriving Functor
 
