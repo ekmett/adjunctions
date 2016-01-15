@@ -52,7 +52,7 @@ library
     tagged        >= 0.7     && < 1,
     semigroupoids >= 4       && < 6,
     semigroups    >= 0.11    && < 1,
-    transformers  >= 0.2     && < 0.5,
+    transformers  >= 0.2     && < 0.6,
     void          >= 0.5.5.1 && < 1
 
   exposed-modules:
