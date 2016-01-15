@@ -48,10 +48,10 @@ import Control.Comonad.Trans.Env
 import Control.Comonad.Trans.Traced
 
 import Data.Functor.Identity
-import Data.Functor.Coproduct
 import Data.Functor.Compose
 import Data.Functor.Product
 import Data.Functor.Rep
+import Data.Functor.Sum
 import Data.Profunctor
 import Data.Void
 
@@ -89,7 +89,7 @@ class (Functor f, Representable u) =>
 -- This can be used with the combinators from the @lens@ package.
 --
 -- @'adjuncted' :: 'Adjunction' f u => 'Iso'' (f a -> b) (a -> u b)@
-adjuncted :: (Adjunction f u, Profunctor p, Functor g) 
+adjuncted :: (Adjunction f u, Profunctor p, Functor g)
           => p (a -> u b) (g (c -> u d)) -> p (f a -> b) (g (f c -> d))
 adjuncted = dimap leftAdjunct (fmap rightAdjunct)
 {-# INLINE adjuncted #-}
@@ -181,12 +181,10 @@ instance (Adjunction f g, Adjunction f' g') =>
   counit = rightAdjunct (rightAdjunct getCompose) . getCompose
 
 instance (Adjunction f g, Adjunction f' g') =>
-         Adjunction (Coproduct f f') (Product g g') where
-  unit a = Pair (leftAdjunct left a) (leftAdjunct right a)
-  counit = coproduct (rightAdjunct fstP) (rightAdjunct sndP)
-    where
-      fstP (Pair x _) = x
-      sndP (Pair _ x) = x
+         Adjunction (Sum f f') (Product g g') where
+  unit a = Pair (leftAdjunct InL a) (leftAdjunct InR a)
+  counit (InL l) = rightAdjunct (\(Pair x _) -> x) l
+  counit (InR r) = rightAdjunct (\(Pair _ x) -> x) r
 
 instance Adjunction f u =>
          Adjunction (Free f) (Cofree u) where
