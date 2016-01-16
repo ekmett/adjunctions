@@ -77,7 +77,6 @@ import Data.Functor.Compose
 import Data.Functor.Extend
 import Data.Functor.Product
 import qualified Data.Monoid as Monoid
-import Data.Orphans ()
 import Data.Profunctor
 import Data.Proxy
 import Data.Sequence (Seq)
