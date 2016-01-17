@@ -1,3 +1,9 @@
+4.3
+---
+* Removed a spurious superclass constraint for `Applicative (StoreT g w)`
+* GHC 8 support
+* `comonad` 5 support
+
 4.2.2
 -----
 * Builds clean on GHC 7.10

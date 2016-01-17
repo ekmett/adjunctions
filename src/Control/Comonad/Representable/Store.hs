@@ -95,7 +95,7 @@ instance (Apply w, Semigroup (Rep g), Representable g) => Apply (StoreT g w) whe
 instance (ComonadApply w, Semigroup (Rep g), Representable g) => ComonadApply (StoreT g w) where
   StoreT ff m <@> StoreT fa n = StoreT (apRep <$> ff <@> fa) (m <> n)
 
-instance (Applicative w, Semigroup (Rep g), Monoid (Rep g), Representable g) => Applicative (StoreT g w) where
+instance (Applicative w, Monoid (Rep g), Representable g) => Applicative (StoreT g w) where
   pure a = StoreT (pure (pureRep a)) mempty
   StoreT ff m <*> StoreT fa n = StoreT (apRep <$> ff <*> fa) (m `mappend` n)
 
