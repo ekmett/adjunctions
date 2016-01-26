@@ -61,6 +61,6 @@ YonedaT f `maxF` YonedaT g = liftYonedaT $ f id `max` g id
 {-# INLINE maxF #-}
 
 minF :: (Contravariant f, Ord (f a)) => YonedaT f a -> YonedaT f a -> YonedaT f a
-YonedaT f `minF` YonedaT g = liftYonedaT $ f id `max` g id
+YonedaT f `minF` YonedaT g = liftYonedaT $ f id `min` g id
 -- {-# RULES "min/minF" min = minF #-}
 {-# INLINE minF #-}
