@@ -13,12 +13,6 @@ before_cache:
 
 matrix:
   include:
-    - env: CABALVER=1.24 GHCVER=7.0.4
-      compiler: ": #GHC 7.0.4"
-      addons: {apt: {packages: [cabal-install-1.24,ghc-7.0.4,alex-3.1.4,happy-1.19.5], sources: [hvr-ghc]}}
-    - env: CABALVER=1.24 GHCVER=7.2.2
-      compiler: ": #GHC 7.2.2"
-      addons: {apt: {packages: [cabal-install-1.24,ghc-7.2.2,alex-3.1.4,happy-1.19.5], sources: [hvr-ghc]}}
     - env: CABALVER=1.24 GHCVER=7.4.2
       compiler: ": #GHC 7.4.2"
       addons: {apt: {packages: [cabal-install-1.24,ghc-7.4.2,alex-3.1.4,happy-1.19.5], sources: [hvr-ghc]}}
@@ -39,9 +33,7 @@ matrix:
       addons: {apt: {packages: [cabal-install-1.24,ghc-head,alex-3.1.4,happy-1.19.5], sources: [hvr-ghc]}}
 
   allow_failures:
-    - env: CABALVER=1.24 GHCVER=7.0.4
-    - env: CABALVER=1.24 GHCVER=7.2.2
-    - env: CABALVER=head GHCVER=head
+    - env: CABALVER=1.24 GHCVER=head
 
 before_install:
  - unset CC
