@@ -74,6 +74,7 @@ import Data.Void
 -- > leftAdjunct counit = id
 class (Functor f, Representable u) =>
       Adjunction f u | f -> u, u -> f where
+  {-# MINIMAL (unit, counit) | (leftAdjunct, rightAdjunct) #-}
   unit         :: a -> u (f a)
   counit       :: f (u a) -> a
   leftAdjunct  :: (f a -> b) -> a -> u b
