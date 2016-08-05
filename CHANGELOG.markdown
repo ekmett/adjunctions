@@ -1,3 +1,7 @@
+next
+----
+* Added a `MINIMAL` pragma to `Adjunction`.
+
 4.3
 ---
 * Removed a spurious superclass constraint for `Applicative (StoreT g w)`
