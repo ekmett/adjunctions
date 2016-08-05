@@ -60,6 +60,7 @@ module Data.Functor.Rep
   ) where
 
 import Control.Applicative
+import Control.Applicative.Backwards
 import Control.Arrow ((&&&))
 import Control.Comonad
 import Control.Comonad.Trans.Class
@@ -76,6 +77,7 @@ import Data.Functor.Identity
 import Data.Functor.Compose
 import Data.Functor.Extend
 import Data.Functor.Product
+import Data.Functor.Reverse
 import qualified Data.Monoid as Monoid
 import Data.Profunctor
 import Data.Proxy
@@ -230,6 +232,16 @@ instance Representable f => Representable (Cofree f) where
       Seq.EmptyL -> a
       k Seq.:< ks -> index (index as k) ks
   tabulate f = f Seq.empty :< tabulate (\k -> tabulate (f . (k Seq.<|)))
+
+instance Representable f => Representable (Backwards f) where
+  type Rep (Backwards f) = Rep f
+  index (Backwards f) i = index f i
+  tabulate = Backwards . tabulate
+
+instance Representable f => Representable (Reverse f) where
+  type Rep (Reverse f) = Rep f
+  index (Reverse f) i = index f i
+  tabulate = Reverse . tabulate
 
 instance Representable Monoid.Dual where
   type Rep Monoid.Dual = ()

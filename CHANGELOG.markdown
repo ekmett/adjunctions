@@ -1,6 +1,7 @@
 next
 ----
-* Added a `MINIMAL` pragma to `Adjunction`.
+* Add `Representable` instances for `Backwards` and `Reverse`.
+* Add `MINIMAL` pragmas to the `Adjunction` classes.
 
 4.3
 ---
