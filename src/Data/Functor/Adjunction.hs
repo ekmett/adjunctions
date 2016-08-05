@@ -74,6 +74,9 @@ import Data.Void
 -- > leftAdjunct counit = id
 class (Functor f, Representable u) =>
       Adjunction f u | f -> u, u -> f where
+#if __GLASGOW_HASKELL__ >= 708
+  {-# MINIMAL (unit, counit) | (leftAdjunct, rightAdjunct) #-}
+#endif
   unit         :: a -> u (f a)
   counit       :: f (u a) -> a
   leftAdjunct  :: (f a -> b) -> a -> u b

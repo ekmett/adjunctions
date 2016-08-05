@@ -1,5 +1,6 @@
 4.3
 ---
+* Added a `MINIMAL` pragma to `Adjunction`.
 * Removed a spurious superclass constraint for `Applicative (StoreT g w)`
 * GHC 8 support
 * `comonad` 5 support

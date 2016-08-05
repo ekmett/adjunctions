@@ -41,6 +41,9 @@ import Data.Profunctor
 -- permit @unsafePerformIO@, and therefore does not exist.
 
 class (Contravariant f, Representable g) => Adjunction f g | f -> g, g -> f where
+#if __GLASGOW_HASKELL__ >= 708
+  {-# MINIMAL (unit, counit) | (leftAdjunct, rightAdjunct) #-}
+#endif
   unit :: a -> g (f a) -- monad in Hask
   counit :: a -> f (g a) -- comonad in Hask^op
   leftAdjunct  :: (b -> f a) -> a -> g b
