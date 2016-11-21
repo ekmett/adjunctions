@@ -31,6 +31,7 @@ module Data.Functor.Rep
   , fmapRep
   -- ** Distributive
   , distributeRep
+  , collectRep
   -- ** Apply/Applicative
   , apRep
   , pureRep
@@ -153,6 +154,9 @@ apRep f g = tabulate (index f <*> index g)
 
 distributeRep :: (Representable f, Functor w) => w (f a) -> f (w a)
 distributeRep wf = tabulate (\k -> fmap (`index` k) wf)
+
+collectRep :: (Representable f, Functor w) => (a -> f b) -> w a -> f (w b)
+collectRep f w = tabulate (\k -> (`index` k) . f <$> w)
 
 duplicateRepBy :: Representable f => (Rep f -> Rep f -> Rep f) -> f a -> f (f a)
 duplicateRepBy plus w = tabulate (\m -> tabulate (index w . plus m))
