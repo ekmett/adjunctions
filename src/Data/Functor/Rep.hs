@@ -29,6 +29,8 @@ module Data.Functor.Rep
   -- * Default definitions
   -- ** Functor
   , fmapRep
+  -- ** FunctorWithIndex
+  , imapRep
   -- ** Distributive
   , distributeRep
   , collectRep
@@ -127,6 +129,9 @@ tabulated = dimap tabulate (fmap index)
 
 fmapRep :: Representable f => (a -> b) -> f a -> f b
 fmapRep f = tabulate . fmap f . index
+
+imapRep :: Representable f => (Rep f -> a -> b) -> f a -> f b
+imapRep f fa = tabulate (f <*> index fa)
 
 pureRep :: Representable f => a -> f a
 pureRep = tabulate . const
