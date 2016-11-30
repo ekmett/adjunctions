@@ -1,6 +1,7 @@
 next
 ----
 * Add `Representable` instances for `Backwards` and `Reverse`.
+* Add `collectRep` and `imapRep` functions to `Data.Functor.Rep`.
 * Add `MINIMAL` pragmas to the `Adjunction` classes.
 
 4.3
