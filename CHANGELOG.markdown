@@ -1,6 +1,6 @@
 next
 ----
-* Add `Representable` instances for `Backwards` and `Reverse`.
+* Add `Representable` instances for `Backwards`, `Reverse`, and the datatypes in `GHC.Generics`.
 * Add `collectRep` and `imapRep` functions to `Data.Functor.Rep`.
 * Add `MINIMAL` pragmas to the `Adjunction` classes.
 

@@ -1,5 +1,6 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -89,6 +90,7 @@ import qualified Data.Sequence as Seq
 import Data.Semigroup hiding (Product)
 import Data.Tagged
 import Data.Void
+import GHC.Generics hiding (Rep)
 import Prelude hiding (lookup)
 
 -- | A 'Functor' @f@ is 'Representable' if 'tabulate' and 'index' witness an isomorphism to @(->) x@.
@@ -273,6 +275,37 @@ instance Representable Complex where
   index (r :+ i) key = if key then i else r
   tabulate f = f False :+ f True
 #endif
+
+instance Representable U1 where
+  type Rep U1 = Void
+  index U1 = absurd
+  tabulate _ = U1
+
+instance (Representable f, Representable g) => Representable (f :*: g) where
+  type Rep (f :*: g) = Either (Rep f) (Rep g)
+  index (a :*: _) (Left  i) = index a i
+  index (_ :*: b) (Right j) = index b j
+  tabulate f = tabulate (f . Left) :*: tabulate (f . Right)
+
+instance (Representable f, Representable g) => Representable (f :.: g) where
+  type Rep (f :.: g) = (Rep f, Rep g)
+  index (Comp1 fg) (i, j) = index (index fg i) j
+  tabulate = Comp1 . tabulate . fmap tabulate . curry
+
+instance Representable Par1 where
+  type Rep Par1 = ()
+  index (Par1 a) () = a
+  tabulate f = Par1 (f ())
+
+instance Representable f => Representable (Rec1 f) where
+  type Rep (Rec1 f) = Rep f
+  index (Rec1 f) i = index f i
+  tabulate = Rec1 . tabulate
+
+instance Representable f => Representable (M1 i c f) where
+  type Rep (M1 i c f) = Rep f
+  index (M1 f) i = index f i
+  tabulate = M1 . tabulate
 
 newtype Co f a = Co { unCo :: f a } deriving Functor
 
