@@ -7,6 +7,9 @@
 #if __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Trustworthy #-}
 #endif
+#if __GLASGOW_HASKELL__ >= 708
+{-# LANGUAGE EmptyCase #-}
+#endif
 
 -------------------------------------------------------------------------------------------
 -- |
@@ -54,6 +57,7 @@ import Data.Functor.Rep
 import Data.Functor.Sum
 import Data.Profunctor
 import Data.Void
+import GHC.Generics (V1, U1 (..), Par1 (..))
 
 -- | An adjunction between Hask and Hask.
 --
@@ -194,3 +198,18 @@ instance Adjunction f u =>
   unit a = return a :< tabulateAdjunction (\k -> leftAdjunct (wrap . flip unsplitL k) a)
   counit (Pure a) = extract a
   counit (Free k) = rightAdjunct (flip indexAdjunction k . unwrap) (extractL k)
+
+instance Adjunction V1 U1 where
+  unit _ = U1
+  counit = absurdV1
+
+absurdV1 :: V1 a -> b
+#if __GLASGOW_HASKELL__ >= 708
+absurdV1 x = case x of {}
+#else
+absurdV1 x = x `seq` undefined
+#endif
+
+instance Adjunction Par1 Par1 where
+  leftAdjunct f = Par1 . f . Par1
+  rightAdjunct f = unPar1 . f . unPar1
