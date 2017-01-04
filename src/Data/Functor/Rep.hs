@@ -6,6 +6,8 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DefaultSignatures #-}
+{-# LANGUAGE TypeOperators #-}
 {-# OPTIONS_GHC -fenable-rewrite-rules #-}
 ----------------------------------------------------------------------
 -- |
@@ -92,6 +94,7 @@ import Data.Tagged
 import Data.Void
 import GHC.Generics hiding (Rep)
 import Prelude hiding (lookup)
+import qualified GHC.Generics as Gen
 
 -- | A 'Functor' @f@ is 'Representable' if 'tabulate' and 'index' witness an isomorphism to @(->) x@.
 --
@@ -107,12 +110,25 @@ import Prelude hiding (lookup)
 
 class Distributive f => Representable f where
   type Rep f :: *
+  type Rep f = Rep (Gen.Rep1 f)
+
   -- |
   -- @
   -- 'fmap' f . 'tabulate' ≡ 'tabulate' . 'fmap' f
   -- @
   tabulate :: (Rep f -> a) -> f a
+#ifndef HLINT
+  default tabulate :: (Gen.Generic1 f, Rep (Gen.Rep1 f) ~ Rep f, Representable (Gen.Rep1 f))
+                   => (Rep f -> a) -> f a
+  tabulate = Gen.to1 . tabulate
+#endif
+
   index    :: f a -> Rep f -> a
+#ifndef HLINT
+  default index :: (Gen.Generic1 f, Rep (Gen.Rep1 f) ~ Rep f, Representable (Gen.Rep1 f))
+                => f a -> Rep f -> a
+  index = index . Gen.from1
+#endif
 
 {-# RULES
 "tabulate/index" forall t. tabulate (index t) = t #-}
@@ -352,3 +368,24 @@ liftR2 f fa fb = tabulate $ \i -> f (index fa i) (index fb i)
 
 liftR3 :: Representable f => (a -> b -> c -> d) -> f a -> f b -> f c -> f d
 liftR3 f fa fb fc = tabulate $ \i -> f (index fa i) (index fb i) (index fc i)
+
+instance (Representable a, Representable b, Distributive (a Gen.:*: b)) => Representable (a Gen.:*: b) where
+  type Rep (a Gen.:*: b) = Either (Rep a) (Rep b)
+  tabulate f = tabulate (f . Left) Gen.:*: tabulate (f . Right)
+  index (a Gen.:*: _) (Left i)  = index a i
+  index (_ Gen.:*: b) (Right i) = index b i
+
+instance Distributive Gen.Par1 => Representable Gen.Par1 where
+  type Rep Gen.Par1 = ()
+  tabulate f = Gen.Par1 $ f ()
+  index (Gen.Par1 x) () = x
+
+instance (Representable f, Distributive (Gen.Rec1 f)) => Representable (Gen.Rec1 f) where
+  type Rep (Gen.Rec1 f) = Rep f
+  tabulate f = Gen.Rec1 $ tabulate f
+  index (Gen.Rec1 x) i = index x i
+
+instance (Representable f, Distributive (Gen.M1 i c f)) => Representable (Gen.M1 i c f) where
+  type Rep (Gen.M1 i c f) = Rep f
+  tabulate f = Gen.M1 $ tabulate f
+  index = index
