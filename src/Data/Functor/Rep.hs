@@ -355,7 +355,7 @@ instance (Representable f, Representable g) => Representable (Compose f g) where
 instance Representable w => Representable (TracedT s w) where
   type Rep (TracedT s w) = (s, Rep w)
   index (TracedT w) (e,k) = index w k e
-  tabulate = TracedT . unCo . collect (Co . tabulate) . curry
+  tabulate = TracedT . unCo . collect (Co #. tabulate) . curry
 
 instance (Representable f, Representable g) => Representable (Product f g) where
   type Rep (Product f g) = Either (Rep f) (Rep g)
@@ -437,8 +437,8 @@ newtype Co f a = Co { unCo :: f a } deriving Functor
 
 instance Representable f => Representable (Co f) where
   type Rep (Co f) = Rep f
-  tabulate = Co . tabulate
-  index (Co f) i = index f i
+  tabulate = Co #. tabulate
+  index = index .# unCo
 
 instance Representable f => Apply (Co f) where
   (<.>) = apRep
