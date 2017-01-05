@@ -5,8 +5,10 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DefaultSignatures #-}
+{-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE TypeOperators #-}
 {-# OPTIONS_GHC -fenable-rewrite-rules #-}
 ----------------------------------------------------------------------
@@ -73,6 +75,9 @@ module Data.Functor.Rep
 import Control.Applicative
 import Control.Applicative.Backwards
 import Control.Arrow ((&&&))
+#if __GLASGOW_HASKELL__ >= 708
+import Data.Coerce
+#endif
 import Control.Comonad
 import Control.Comonad.Trans.Class
 import Control.Comonad.Trans.Traced
@@ -90,7 +95,7 @@ import Data.Functor.Extend
 import Data.Functor.Product
 import Data.Functor.Reverse
 import qualified Data.Monoid as Monoid
-import Data.Profunctor
+import Data.Profunctor.Unsafe
 import Data.Proxy
 import Data.Sequence (Seq)
 import qualified Data.Sequence as Seq
@@ -188,19 +193,30 @@ instance GIndex Par1 where
   gindex' (Par1 a) () = a
 
 type instance GRep' (Rec1 f) = WrappedRep f
+#if __GLASGOW_HASKELL__ >= 708
+-- Using coerce explicitly here seems a bit more readable, and
+-- likely a drop easier on the simplifier.
 instance Representable f => GTabulate (Rec1 f) where
-  gtabulate' f = Rec1 $ tabulate $ f . WrapRep
+  gtabulate' = coerce (tabulate :: (Rep f -> a) -> f a)
+                 :: forall a . (WrappedRep f -> a) -> Rec1 f a
 instance Representable f => GIndex (Rec1 f) where
-  gindex' (Rec1 f) = index f . unwrapRep
+  gindex' = coerce (index :: f a -> Rep f -> a)
+                 :: forall a . Rec1 f a -> WrappedRep f -> a
+#else
+instance Representable f => GTabulate (Rec1 f) where
+  gtabulate' = Rec1 #. tabulate .# (. WrapRep)
+instance Representable f => GIndex (Rec1 f) where
+  gindex' = (. unwrapRep) #. index .# unRec1
+#endif
 
 type instance GRep' (M1 i c f) = GRep' f
 instance GTabulate f => GTabulate (M1 i c f) where
-  gtabulate' = M1 . gtabulate'
+  gtabulate' = M1 #. gtabulate'
 instance GIndex f => GIndex (M1 i c f) where
-  gindex' (M1 f) = gindex' f
+  gindex' = gindex' .# unM1
 
 -- | On the surface, 'WrappedRec' is a simple wrapper around 'Rep'. But it plays
--- a very important role: it prevents generic 'Distributive' instances for
+-- a very important role: it prevents generic 'Representable' instances for
 -- recursive types from sending the typechecker into an infinite loop. Consider
 -- the following datatype:
 --
@@ -318,8 +334,8 @@ instance Representable (Tagged t) where
 
 instance Representable m => Representable (IdentityT m) where
   type Rep (IdentityT m) = Rep m
-  index (IdentityT m) i = index m i
-  tabulate = IdentityT . tabulate
+  index = index .# runIdentityT
+  tabulate = IdentityT #. tabulate
 
 instance Representable ((->) e) where
   type Rep ((->) e) = e
@@ -356,13 +372,13 @@ instance Representable f => Representable (Cofree f) where
 
 instance Representable f => Representable (Backwards f) where
   type Rep (Backwards f) = Rep f
-  index (Backwards f) i = index f i
-  tabulate = Backwards . tabulate
+  index = index .# forwards
+  tabulate = Backwards #. tabulate
 
 instance Representable f => Representable (Reverse f) where
   type Rep (Reverse f) = Rep f
-  index (Reverse f) i = index f i
-  tabulate = Reverse . tabulate
+  index = index .# getReverse
+  tabulate = Reverse #. tabulate
 
 instance Representable Monoid.Dual where
   type Rep Monoid.Dual = ()
@@ -409,13 +425,13 @@ instance Representable Par1 where
 
 instance Representable f => Representable (Rec1 f) where
   type Rep (Rec1 f) = Rep f
-  index (Rec1 f) = index f
-  tabulate = Rec1 . tabulate
+  index = index .# unRec1
+  tabulate = Rec1 #. tabulate
 
 instance Representable f => Representable (M1 i c f) where
   type Rep (M1 i c f) = Rep f
-  index (M1 f) = index f
-  tabulate = M1 . tabulate
+  index = index .# unM1
+  tabulate = M1 #. tabulate
 
 newtype Co f a = Co { unCo :: f a } deriving Functor
 
@@ -433,6 +449,7 @@ instance Representable f => Applicative (Co f) where
 
 instance Representable f => Distributive (Co f) where
   distribute = distributeRep
+  collect = collectRep
 
 instance Representable f => Bind (Co f) where
   (>>-) = bindRep
