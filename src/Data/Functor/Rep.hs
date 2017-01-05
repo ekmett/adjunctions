@@ -1,10 +1,12 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# OPTIONS_GHC -fenable-rewrite-rules #-}
 ----------------------------------------------------------------------
@@ -24,6 +26,7 @@ module Data.Functor.Rep
   (
   -- * Representable Functors
     Representable(..)
+  , Rec1Rep (..)
   , tabulated
   -- * Wrapped representable functors
   , Co(..)
@@ -72,6 +75,7 @@ import Control.Comonad.Trans.Traced
 import Control.Comonad.Cofree
 import Control.Monad.Trans.Identity
 import Control.Monad.Reader
+import Data.Coerce
 #if MIN_VERSION_base(4,4,0)
 import Data.Complex
 #endif
@@ -83,7 +87,7 @@ import Data.Functor.Extend
 import Data.Functor.Product
 import Data.Functor.Reverse
 import qualified Data.Monoid as Monoid
-import Data.Profunctor
+import Data.Profunctor.Unsafe
 import Data.Proxy
 import Data.Sequence (Seq)
 import qualified Data.Sequence as Seq
@@ -107,12 +111,19 @@ import Prelude hiding (lookup)
 
 class Distributive f => Representable f where
   type Rep f :: *
+  type Rep f = Rep (Rep1 f)
   -- |
   -- @
   -- 'fmap' f . 'tabulate' ≡ 'tabulate' . 'fmap' f
   -- @
   tabulate :: (Rep f -> a) -> f a
+  default tabulate :: (Generic1 f, Rep f ~ Rep (Rep1 f), Representable (Rep1 f))
+                   => (Rep f -> a) -> f a
+  tabulate = to1 . tabulate
   index    :: f a -> Rep f -> a
+  default index :: (Generic1 f, Rep f ~ Rep (Rep1 f), Representable (Rep1 f))
+                => f a -> Rep f -> a
+  index = index . from1
 
 {-# RULES
 "tabulate/index" forall t. tabulate (index t) = t #-}
@@ -297,22 +308,28 @@ instance Representable Par1 where
   index (Par1 a) () = a
   tabulate f = Par1 (f ())
 
+newtype Rec1Rep f = Rec1Rep (Rep f)
+
 instance Representable f => Representable (Rec1 f) where
-  type Rep (Rec1 f) = Rep f
-  index (Rec1 f) i = index f i
-  tabulate = Rec1 . tabulate
+  type Rep (Rec1 f) = Rec1Rep f
+  index = coerce (index :: f a -> Rep f -> a)
+             :: forall a . Rec1 f a -> Rec1Rep f -> a
+  tabulate = coerce (tabulate :: (Rep f -> a) -> f a)
+             :: forall a . (Rec1Rep f -> a) -> Rec1 f a
 
 instance Representable f => Representable (M1 i c f) where
   type Rep (M1 i c f) = Rep f
-  index (M1 f) i = index f i
-  tabulate = M1 . tabulate
+  index = coerce (index :: f a -> Rep f -> a)
+    :: forall a . M1 i c f a -> Rep f -> a
+  tabulate = M1 #. tabulate
 
 newtype Co f a = Co { unCo :: f a } deriving Functor
 
 instance Representable f => Representable (Co f) where
   type Rep (Co f) = Rep f
-  tabulate = Co . tabulate
-  index (Co f) i = index f i
+  tabulate = Co #. tabulate
+  index = coerce (index :: f a -> Rep f -> a)
+    :: forall a . Co f a -> Rep f -> a
 
 instance Representable f => Apply (Co f) where
   (<.>) = apRep
