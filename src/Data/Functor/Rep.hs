@@ -177,7 +177,7 @@ instance (GIndex f, GIndex g) => GIndex (f :*: g) where
 
 type instance GRep' (f :.: g) = (WrappedRep f, GRep' g)
 instance (Representable f, GTabulate g) => GTabulate (f :.: g) where
-  gtabulate' = Comp1 . tabulate . fmap gtabulate' . flip fmap WrapRep . curry
+  gtabulate' f = Comp1 $ tabulate $ fmap gtabulate' $ fmap (curry f) WrapRep
 instance (Representable f, GIndex g) => GIndex (f :.: g) where
   gindex' (Comp1 fg) (i, j) = gindex' (index fg (unwrapRep i)) j
 
