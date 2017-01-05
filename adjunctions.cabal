@@ -14,7 +14,6 @@ synopsis:      Adjunctions and representable functors
 description:   Adjunctions and representable functors
 build-type:    Simple
 extra-source-files:
-  .ghci
   .gitignore
   .travis.yml
   .vim.custom

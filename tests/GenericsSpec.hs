@@ -1,6 +1,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -19,9 +20,9 @@ module GenericsSpec (main, spec) where
 import           Data.Distributive (Distributive(..))
 import           Data.Functor.Rep (Representable(..), WrappedRep(..))
 
+#if __GLASGOW_HASKELL__ >= 706
 import           Generics.Deriving.Base hiding (Rep)
-
-#if __GLASGOW_HASKELL__ < 706
+#else
 import qualified Generics.Deriving.TH as Generics (deriveAll1)
 #endif
 
