@@ -97,7 +97,6 @@ import qualified Data.Sequence as Seq
 import Data.Semigroup hiding (Product)
 import Data.Tagged
 import Data.Void
-import qualified GHC.Generics as Gen
 import GHC.Generics hiding (Rep)
 import Prelude hiding (lookup)
 
@@ -125,13 +124,13 @@ class Distributive f => Representable f where
   --
   -- If no definition is provided, this will default to 'gtabulate'.
   tabulate :: (Rep f -> a) -> f a
-  default tabulate :: (Gen.Generic1 f, GRep f ~ Rep f, GTabulate (Gen.Rep1 f))
+  default tabulate :: (Generic1 f, GRep f ~ Rep f, GTabulate (Rep1 f))
                    => (Rep f -> a) -> f a
   tabulate = gtabulate
 
   -- | If no definition is provided, this will default to 'gindex'.
   index    :: f a -> Rep f -> a
-  default index :: (Gen.Generic1 f, GRep f ~ Rep f, GIndex (Gen.Rep1 f))
+  default index :: (Generic1 f, GRep f ~ Rep f, GIndex (Rep1 f))
                 => f a -> Rep f -> a
   index = gindex
 
@@ -151,17 +150,17 @@ class Distributive f => Representable f where
 -- @
 --
 -- (See the Haddocks for 'WrappedRep' for an explanation of its purpose.)
-type GRep f = GRep' (Gen.Rep1 f)
+type GRep f = GRep' (Rep1 f)
 
 -- | A default implementation of 'tabulate' in terms of 'GRep'.
-gtabulate :: (Gen.Generic1 f, GRep f ~ Rep f, GTabulate (Gen.Rep1 f))
+gtabulate :: (Generic1 f, GRep f ~ Rep f, GTabulate (Rep1 f))
           => (Rep f -> a) -> f a
-gtabulate = Gen.to1 . gtabulate'
+gtabulate = to1 . gtabulate'
 
 -- | A default implementation of 'index' in terms of 'GRep'.
-gindex :: (Gen.Generic1 f, GRep f ~ Rep f, GIndex (Gen.Rep1 f))
+gindex :: (Generic1 f, GRep f ~ Rep f, GIndex (Rep1 f))
        => f a -> Rep f -> a
-gindex = gindex' . Gen.from1
+gindex = gindex' . from1
 
 type family GRep' (f :: * -> *) :: *
 class GTabulate f where
