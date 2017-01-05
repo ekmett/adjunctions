@@ -6,6 +6,8 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DefaultSignatures #-}
+{-# LANGUAGE TypeOperators #-}
 {-# OPTIONS_GHC -fenable-rewrite-rules #-}
 ----------------------------------------------------------------------
 -- |
@@ -61,6 +63,11 @@ module Data.Functor.Rep
   , duplicateRepBy
   , extendRepBy
   , extractRepBy
+  -- ** Generics
+  , GRep
+  , gindex
+  , gtabulate
+  , WrappedRep(..)
   ) where
 
 import Control.Applicative
@@ -106,13 +113,116 @@ import Prelude hiding (lookup)
 -- @
 
 class Distributive f => Representable f where
+  -- | If no definition is provided, this will default to 'GRep'.
   type Rep f :: *
+  type Rep f = GRep f
+
   -- |
   -- @
   -- 'fmap' f . 'tabulate' ≡ 'tabulate' . 'fmap' f
   -- @
+  --
+  -- If no definition is provided, this will default to 'gtabulate'.
   tabulate :: (Rep f -> a) -> f a
+  default tabulate :: (Generic1 f, GRep f ~ Rep f, GTabulate (Rep1 f))
+                   => (Rep f -> a) -> f a
+  tabulate = gtabulate
+
+  -- | If no definition is provided, this will default to 'gindex'.
   index    :: f a -> Rep f -> a
+  default index :: (Generic1 f, GRep f ~ Rep f, GIndex (Rep1 f))
+                => f a -> Rep f -> a
+  index = gindex
+
+-- | A default implementation of 'Rep' for a datatype that is an instance of
+-- 'Generic1'. This is usually composed of 'Either', tuples, unit tuples, and
+-- underlying 'Rep' values. For instance, if you have:
+--
+-- @
+-- data Foo a = MkFoo a (Bar a) (Baz (Quux a)) deriving ('Functor', 'Generic1')
+-- instance 'Representable' Foo
+-- @
+--
+-- Then you'll get:
+--
+-- @
+-- 'GRep' Foo = Either () (Either ('WrappedRep' Bar) ('WrappedRep' Baz, 'WrappedRep' Quux))
+-- @
+--
+-- (See the Haddocks for 'WrappedRep' for an explanation of its purpose.)
+type GRep f = GRep' (Rep1 f)
+
+-- | A default implementation of 'tabulate' in terms of 'GRep'.
+gtabulate :: (Generic1 f, GRep f ~ Rep f, GTabulate (Rep1 f))
+          => (Rep f -> a) -> f a
+gtabulate = to1 . gtabulate'
+
+-- | A default implementation of 'index' in terms of 'GRep'.
+gindex :: (Generic1 f, GRep f ~ Rep f, GIndex (Rep1 f))
+       => f a -> Rep f -> a
+gindex = gindex' . from1
+
+type family GRep' (f :: * -> *) :: *
+class GTabulate f where
+  gtabulate' :: (GRep' f -> a) -> f a
+class GIndex f where
+  gindex' :: f a -> GRep' f -> a
+
+type instance GRep' (f :*: g) = Either (GRep' f) (GRep' g)
+instance (GTabulate f, GTabulate g) => GTabulate (f :*: g) where
+  gtabulate' f = gtabulate' (f . Left) :*: gtabulate' (f . Right)
+instance (GIndex f, GIndex g) => GIndex (f :*: g) where
+  gindex' (a :*: _) (Left  i) = gindex' a i
+  gindex' (_ :*: b) (Right j) = gindex' b j
+
+type instance GRep' (f :.: g) = (WrappedRep f, GRep' g)
+instance (Representable f, GTabulate g) => GTabulate (f :.: g) where
+  gtabulate' f = Comp1 $ tabulate $ fmap gtabulate' $ fmap (curry f) WrapRep
+instance (Representable f, GIndex g) => GIndex (f :.: g) where
+  gindex' (Comp1 fg) (i, j) = gindex' (index fg (unwrapRep i)) j
+
+type instance GRep' Par1 = ()
+instance GTabulate Par1 where
+  gtabulate' f = Par1 (f ())
+instance GIndex Par1 where
+  gindex' (Par1 a) () = a
+
+type instance GRep' (Rec1 f) = WrappedRep f
+instance Representable f => GTabulate (Rec1 f) where
+  gtabulate' f = Rec1 $ tabulate $ f . WrapRep
+instance Representable f => GIndex (Rec1 f) where
+  gindex' (Rec1 f) = index f . unwrapRep
+
+type instance GRep' (M1 i c f) = GRep' f
+instance GTabulate f => GTabulate (M1 i c f) where
+  gtabulate' = M1 . gtabulate'
+instance GIndex f => GIndex (M1 i c f) where
+  gindex' (M1 f) = gindex' f
+
+-- | On the surface, 'WrappedRec' is a simple wrapper around 'Rep'. But it plays
+-- a very important role: it prevents generic 'Distributive' instances for
+-- recursive types from sending the typechecker into an infinite loop. Consider
+-- the following datatype:
+--
+-- @
+-- data Stream a = a :< Stream a deriving ('Functor', 'Generic1')
+-- instance 'Representable' Stream
+-- @
+--
+-- With 'WrappedRep', we have its 'Rep' being:
+--
+-- @
+-- 'Rep' Stream = 'Either' () ('WrappedRep' Stream)
+-- @
+--
+-- If 'WrappedRep' didn't exist, it would be:
+--
+-- @
+-- 'Rep' Stream = Either () (Either () (Either () ...))
+-- @
+--
+-- An infinite type! 'WrappedRep' breaks the potentially infinite loop.
+newtype WrappedRep f = WrapRep { unwrapRep :: Rep f }
 
 {-# RULES
 "tabulate/index" forall t. tabulate (index t) = t #-}
@@ -299,12 +409,12 @@ instance Representable Par1 where
 
 instance Representable f => Representable (Rec1 f) where
   type Rep (Rec1 f) = Rep f
-  index (Rec1 f) i = index f i
+  index (Rec1 f) = index f
   tabulate = Rec1 . tabulate
 
 instance Representable f => Representable (M1 i c f) where
   type Rep (M1 i c f) = Rep f
-  index (M1 f) i = index f i
+  index (M1 f) = index f
   tabulate = M1 . tabulate
 
 newtype Co f a = Co { unCo :: f a } deriving Functor
