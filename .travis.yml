@@ -66,7 +66,6 @@ install:
      rm -rf $HOME/.cabsnap;
      mkdir -p $HOME/.ghc $HOME/.cabal/lib $HOME/.cabal/share $HOME/.cabal/bin;
      cabal install --only-dependencies --enable-tests --enable-benchmarks;
-     if [ "$GHCVER" = "7.10.3" ]; then cabal install Cabal-1.22.4.0; fi;
    fi
 
 # snapshot package-db on cache miss
@@ -83,7 +82,7 @@ install:
 script:
  - cabal configure --enable-tests -v2  # -v2 provides useful information for debugging
  - cabal build   # this builds all libraries and executables (including tests)
- - cabal test
+ - cabal test --show-details=always
  - cabal bench || true  # expected result: these will crash
  - cabal sdist || true  # tests that a source-distribution can be generated
 
