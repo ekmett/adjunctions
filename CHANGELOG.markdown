@@ -2,6 +2,7 @@ next
 ----
 * Add `GHC.Generics`-based default implementation for `Data.Functor.Rep.Representable` instances
 * Add `Data.Functor.Rep.Representable` instances for `Backwards`, `Reverse`, and the datatypes in `GHC.Generics`.
+* Add `Data.Functor.Adjunction.Adjunction` instances for some datatypes in `GHC.Generics`
 * Add `Data.Functor.Contravariant.Rep.Representable` instances for `U1` and `(:*:)` from `GHC.Generics`
 * Add `collectRep` and `imapRep` functions to `Data.Functor.Rep`.
 * Add `MINIMAL` pragmas to the `Adjunction` classes.
