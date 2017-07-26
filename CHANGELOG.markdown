@@ -7,6 +7,10 @@ next
 * Add `collectRep` and `imapRep` functions to `Data.Functor.Rep`.
 * Add `MINIMAL` pragmas to the `Adjunction` classes.
 
+4.3.1
+---
+* Added Semigroup and Monoid instances for `Co` from `Data.Functor.Rep`
+
 4.3
 ---
 * Removed a spurious superclass constraint for `Applicative (StoreT g w)`
