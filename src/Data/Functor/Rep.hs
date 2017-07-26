@@ -9,7 +9,6 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE Trustworthy #-}
-{-# LANGUAGE TypeOperators #-}
 {-# OPTIONS_GHC -fenable-rewrite-rules #-}
 ----------------------------------------------------------------------
 -- |
@@ -434,6 +433,13 @@ instance Representable f => Representable (M1 i c f) where
   tabulate = M1 #. tabulate
 
 newtype Co f a = Co { unCo :: f a } deriving Functor
+
+instance (Representable f, Semigroup a) => Semigroup (Co f a) where
+  Co a <> Co b = Co . tabulate $ index a <> index b
+
+instance (Representable f, Semigroup a, Monoid a) => Monoid (Co f a) where
+  mempty = Co (tabulate (const mempty))
+  mappend = (<>)
 
 instance Representable f => Representable (Co f) where
   type Rep (Co f) = Rep f
