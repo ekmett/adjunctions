@@ -35,8 +35,6 @@ module Data.Functor.Rep
   -- * Default definitions
   -- ** Functor
   , fmapRep
-  -- ** FunctorWithIndex
-  , imapRep
   -- ** Distributive
   , distributeRep
   , collectRep
@@ -70,7 +68,7 @@ module Data.Functor.Rep
   , imapRep
   , ifoldMapRep
   , itraverseRep
-  
+
   -- ** Generics
   , GRep
   , gindex
@@ -327,7 +325,7 @@ ifoldMapRep :: forall r m a. (Representable r, Foldable r, Monoid m)
             => (Rep r -> a -> m) -> (r a -> m)
 ifoldMapRep ix xs = fold (tabulate (\(i :: Rep r) -> ix i $ index xs i) :: r m)
 
-itraverseRep :: forall r f a a'. (Representable r, Traversable r, Applicative f) 
+itraverseRep :: forall r f a a'. (Representable r, Traversable r, Applicative f)
              => (Rep r -> a -> f a') -> (r a -> f (r a'))
 itraverseRep ix xs = sequenceA $ tabulate (ix <*> index xs)
 
