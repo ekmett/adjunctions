@@ -1,3 +1,7 @@
+4.4
+---
+* Added `imapRep`, `ifoldMapRep`, `itraverseRep` to make it easier to define representable `FunctorWithIndex`, `FoldableWithIndex`, `TraversableWithIndex` instances from the `lens` package.
+
 4.3
 ---
 * Added a `MINIMAL` pragma to `Adjunction`.

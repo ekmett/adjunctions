@@ -5,6 +5,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fenable-rewrite-rules #-}
 ----------------------------------------------------------------------
 -- |
@@ -57,6 +58,10 @@ module Data.Functor.Rep
   , duplicateRepBy
   , extendRepBy
   , extractRepBy
+  -- ** WithIndex
+  , imapRep
+  , ifoldMapRep
+  , itraverseRep
   ) where
 
 import Control.Applicative
@@ -71,6 +76,7 @@ import Control.Monad.Reader
 import Data.Complex
 #endif
 import Data.Distributive
+import Data.Foldable (Foldable(fold))
 import Data.Functor.Bind
 import Data.Functor.Identity
 import Data.Functor.Compose
@@ -175,6 +181,17 @@ extendRep = extendRepBy mappend
 
 extractRep :: (Representable f, Monoid (Rep f)) => f a -> a
 extractRep = extractRepBy mempty
+
+imapRep :: Representable r => (Rep r -> a -> a') -> (r a -> r a')
+imapRep f xs = tabulate (f <*> index xs)
+
+ifoldMapRep :: forall r m a. (Representable r, Foldable r, Monoid m)
+            => (Rep r -> a -> m) -> (r a -> m)
+ifoldMapRep ix xs = fold (tabulate (\(i :: Rep r) -> ix i $ index xs i) :: r m)
+
+itraverseRep :: forall r f a a'. (Representable r, Traversable r, Applicative f) 
+             => (Rep r -> a -> f a') -> (r a -> f (r a'))
+itraverseRep ix xs = sequenceA $ tabulate (ix <*> index xs)
 
 -- * Instances
 
