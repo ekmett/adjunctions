@@ -2,7 +2,7 @@ name:          adjunctions
 category:      Data Structures, Adjunctions
 version:       4.3
 license:       BSD3
-cabal-version: >= 1.6
+cabal-version: >= 1.8
 license-file:  LICENSE
 author:        Edward A. Kmett
 maintainer:    Edward A. Kmett <ekmett@gmail.com>
@@ -14,7 +14,6 @@ synopsis:      Adjunctions and representable functors
 description:   Adjunctions and representable functors
 build-type:    Simple
 extra-source-files:
-  .ghci
   .gitignore
   .travis.yml
   .vim.custom
@@ -45,7 +44,7 @@ library
     comonad             >= 4       && < 6,
     containers          >= 0.3     && < 0.6,
     contravariant       >= 1       && < 2,
-    distributive        >= 0.5     && < 1,
+    distributive        >= 0.5.1   && < 1,
     free                >= 4       && < 5,
     mtl                 >= 2.0.1   && < 2.3,
     profunctors         >= 4       && < 6,
@@ -55,6 +54,9 @@ library
     transformers        >= 0.2     && < 0.6,
     transformers-compat >= 0.3     && < 1,
     void                >= 0.5.5.1 && < 1
+
+  if impl(ghc < 7.6)
+    build-depends: ghc-prim
 
   exposed-modules:
     Control.Comonad.Representable.Store
@@ -70,3 +72,23 @@ library
     Data.Functor.Rep
 
   ghc-options: -Wall
+
+  -- See https://ghc.haskell.org/trac/ghc/wiki/Migration/8.0#base-4.9.0.0
+  if impl(ghc >= 8.0)
+    ghc-options: -Wcompat -Wnoncanonical-monad-instances -Wnoncanonical-monadfail-instances
+
+test-suite spec
+  type:           exitcode-stdio-1.0
+  hs-source-dirs: tests
+
+  build-depends:
+    adjunctions,
+    base             >= 4     && < 5,
+    distributive     >= 0.5.1 && < 1,
+    generic-deriving >= 1.11  && < 2,
+    hspec            >= 2     && < 3
+
+  main-is: Spec.hs
+  other-modules: GenericsSpec
+
+  ghc-options: -Wall -threaded -rtsopts

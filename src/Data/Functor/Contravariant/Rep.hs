@@ -1,4 +1,7 @@
-{-# LANGUAGE TypeFamilies, FlexibleContexts, FlexibleInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators #-}
 {-# OPTIONS_GHC -fenable-rewrite-rules #-}
 ----------------------------------------------------------------------
 -- |
@@ -26,6 +29,7 @@ import Data.Functor.Contravariant
 import Data.Functor.Product
 import Data.Profunctor
 import Data.Proxy
+import GHC.Generics hiding (Rep)
 import Prelude hiding (lookup)
 
 -- | A 'Contravariant' functor @f@ is 'Representable' if 'tabulate' and 'index' witness an isomorphism to @(_ -> Rep f)@.
@@ -59,7 +63,7 @@ class Contravariant f => Representable f where
 -- This can be used with the combinators from the @lens@ package.
 --
 -- @'tabulated' :: 'Representable' f => 'Iso'' (a -> 'Rep' f) (f a)@
-tabulated :: (Representable f, Representable g, Profunctor p, Functor h) 
+tabulated :: (Representable f, Representable g, Profunctor p, Functor h)
           => p (f a) (h (g b)) -> p (a -> Rep f) (h (b -> Rep g))
 tabulated = dimap tabulate (fmap index)
 {-# INLINE tabulated #-}
@@ -90,3 +94,16 @@ instance (Representable f, Representable g) => Representable (Product f g) where
   contramapWithRep h (Pair f g) = Pair
       (contramapWithRep (fmap fst . h) f)
       (contramapWithRep (fmap snd . h) g)
+
+instance Representable U1 where
+  type Rep U1 = ()
+  tabulate _ = U1
+  index U1 _ = ()
+  contramapWithRep _ U1 = U1
+
+instance (Representable f, Representable g) => Representable (f :*: g) where
+  type Rep (f :*: g) = (Rep f, Rep g)
+  tabulate f = tabulate (fst . f) :*: tabulate (snd . f)
+  index (f :*: g) a = (index f a, index g a)
+  contramapWithRep h (f :*: g) =
+    contramapWithRep (fmap fst . h) f :*: contramapWithRep (fmap snd . h) g

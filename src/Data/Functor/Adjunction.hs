@@ -1,11 +1,15 @@
 {-# LANGUAGE Rank2Types
            , MultiParamTypeClasses
            , FunctionalDependencies
+           , TypeOperators
            , UndecidableInstances #-}
 
 {-# LANGUAGE CPP #-}
 #if __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Trustworthy #-}
+#endif
+#if __GLASGOW_HASKELL__ >= 708
+{-# LANGUAGE EmptyCase #-}
 #endif
 
 -------------------------------------------------------------------------------------------
@@ -54,6 +58,7 @@ import Data.Functor.Rep
 import Data.Functor.Sum
 import Data.Profunctor
 import Data.Void
+import GHC.Generics
 
 -- | An adjunction between Hask and Hask.
 --
@@ -194,3 +199,39 @@ instance Adjunction f u =>
   unit a = return a :< tabulateAdjunction (\k -> leftAdjunct (wrap . flip unsplitL k) a)
   counit (Pure a) = extract a
   counit (Free k) = rightAdjunct (flip indexAdjunction k . unwrap) (extractL k)
+
+instance Adjunction V1 U1 where
+  unit _ = U1
+  counit = absurdV1
+
+absurdV1 :: V1 a -> b
+#if __GLASGOW_HASKELL__ >= 708
+absurdV1 x = case x of {}
+#else
+absurdV1 x = x `seq` undefined
+#endif
+
+instance Adjunction Par1 Par1 where
+  leftAdjunct f = Par1 . f . Par1
+  rightAdjunct f = unPar1 . f . unPar1
+
+instance Adjunction f g => Adjunction (Rec1 f) (Rec1 g) where
+  unit   = Rec1 . leftAdjunct Rec1
+  counit = rightAdjunct unRec1 . unRec1
+
+-- @i@ and @c@ indexes have to be the same due functional dependency.
+-- But we want them to be different, therefore we rather not define this instance
+{-
+instance Adjunction f g => Adjunction (M1 i c f) (M1 i c g) where
+  unit   = M1 . leftAdjunct M1
+  counit = rightAdjunct unM1 . unM1
+-}
+
+instance (Adjunction f g, Adjunction f' g') => Adjunction (f' :.: f) (g :.: g') where
+  unit   = Comp1 . leftAdjunct (leftAdjunct Comp1)
+  counit = rightAdjunct (rightAdjunct unComp1) . unComp1
+
+instance (Adjunction f g, Adjunction f' g') => Adjunction (f :+: f') (g :*: g') where
+  unit a = leftAdjunct L1 a :*: leftAdjunct R1 a
+  counit (L1 l) = rightAdjunct (\(x :*: _) -> x) l
+  counit (R1 r) = rightAdjunct (\(_ :*: x) -> x) r
