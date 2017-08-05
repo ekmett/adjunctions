@@ -108,6 +108,7 @@ import Data.Sequence (Seq)
 import qualified Data.Sequence as Seq
 import Data.Semigroup hiding (Product)
 import Data.Tagged
+import Data.Traversable (Traversable(sequenceA))
 import Data.Void
 import GHC.Generics hiding (Rep)
 import Prelude hiding (lookup)
