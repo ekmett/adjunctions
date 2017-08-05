@@ -7,6 +7,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE TypeOperators #-}
@@ -65,6 +66,11 @@ module Data.Functor.Rep
   , duplicateRepBy
   , extendRepBy
   , extractRepBy
+  -- ** WithIndex
+  , imapRep
+  , ifoldMapRep
+  , itraverseRep
+  
   -- ** Generics
   , GRep
   , gindex
@@ -88,6 +94,7 @@ import Control.Monad.Reader
 import Data.Complex
 #endif
 import Data.Distributive
+import Data.Foldable (Foldable(fold))
 import Data.Functor.Bind
 import Data.Functor.Identity
 import Data.Functor.Compose
@@ -101,6 +108,7 @@ import Data.Sequence (Seq)
 import qualified Data.Sequence as Seq
 import Data.Semigroup hiding (Product)
 import Data.Tagged
+import Data.Traversable (Traversable(sequenceA))
 import Data.Void
 import GHC.Generics hiding (Rep)
 import Prelude hiding (lookup)
@@ -258,9 +266,6 @@ tabulated = dimap tabulate (fmap index)
 fmapRep :: Representable f => (a -> b) -> f a -> f b
 fmapRep f = tabulate . fmap f . index
 
-imapRep :: Representable f => (Rep f -> a -> b) -> f a -> f b
-imapRep f fa = tabulate (f <*> index fa)
-
 pureRep :: Representable f => a -> f a
 pureRep = tabulate . const
 
@@ -314,6 +319,17 @@ extendRep = extendRepBy mappend
 
 extractRep :: (Representable f, Monoid (Rep f)) => f a -> a
 extractRep = extractRepBy mempty
+
+imapRep :: Representable r => (Rep r -> a -> a') -> (r a -> r a')
+imapRep f xs = tabulate (f <*> index xs)
+
+ifoldMapRep :: forall r m a. (Representable r, Foldable r, Monoid m)
+            => (Rep r -> a -> m) -> (r a -> m)
+ifoldMapRep ix xs = fold (tabulate (\(i :: Rep r) -> ix i $ index xs i) :: r m)
+
+itraverseRep :: forall r f a a'. (Representable r, Traversable r, Applicative f) 
+             => (Rep r -> a -> f a') -> (r a -> f (r a'))
+itraverseRep ix xs = sequenceA $ tabulate (ix <*> index xs)
 
 -- * Instances
 
