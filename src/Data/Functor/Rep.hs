@@ -500,15 +500,15 @@ instance Representable f => Monad (Co f) where
   (>>=) = bindRep
 
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 704
-instance (RepresentableOf rep f) => MonadReader rep (Co f) where
+instance (Representable f, Rep f ~ rep) => MonadReader rep (Co f) where
   ask = askRep
   local = localRep
 #endif
 
-instance (RepresentableOf rep f, Semigroup rep) => Extend (Co f) where
+instance (Representable f, Semigroup (Rep f)) => Extend (Co f) where
   extended = extendedRep
 
-instance (RepresentableOf rep f, Monoid rep) => Comonad (Co f) where
+instance (Representable f, Monoid (Rep f)) => Comonad (Co f) where
   extend = extendRep
   extract = extractRep
 
