@@ -29,6 +29,7 @@ module Data.Functor.Rep
   (
   -- * Representable Functors
     Representable(..)
+  , RepresentableOf
   , tabulated
   -- * Wrapped representable functors
   , Co(..)
@@ -144,6 +145,32 @@ class Distributive f => Representable f where
   default index :: (Generic1 f, GRep f ~ Rep f, GIndex (Rep1 f))
                 => f a -> Rep f -> a
   index = gindex
+
+-- | A type class alias that allows specifying `Rep f :: *` explicitly, as
+-- the first argument.
+-- 
+-- @
+-- RepresentableOf :: * -> (* -> *) -> Constraint
+-- @
+-- 
+-- This means `RepresentableOf rep f` is a drop-in replacement for
+-- `(Representable f, Rep f ~ rep)`.
+-- 
+-- Instead of writing 
+-- 
+-- @
+-- localRep :: Representable f => (Rep f -> Rep f) -> (f a -> f a)
+-- localRep f m = tabulate (index m . f)
+-- @
+-- 
+-- we can give give a name to `Rep f` (`rep`)
+-- 
+-- @
+-- localRep :: RepresentableOf rep f => (rep -> rep) -> (f a -> f a)
+-- localRep f m = tabulate (index m . f)
+-- @
+class    (Representable f, Rep f ~ rep) => RepresentableOf rep f 
+instance (Representable f, Rep f ~ rep) => RepresentableOf rep f 
 
 -- | A default implementation of 'Rep' for a datatype that is an instance of
 -- 'Generic1'. This is usually composed of 'Either', tuples, unit tuples, and
@@ -279,10 +306,10 @@ mzipWithRep f as bs = tabulate $ \k -> f (index as k) (index bs k)
 mzipRep :: Representable f => f a -> f b -> f (a, b)
 mzipRep as bs = tabulate (index as &&& index bs)
 
-askRep :: Representable f => f (Rep f)
+askRep :: RepresentableOf rep f => f rep
 askRep = tabulate id
 
-localRep :: Representable f => (Rep f -> Rep f) -> f a -> f a
+localRep :: RepresentableOf rep f => (rep -> rep) -> f a -> f a
 localRep f m = tabulate (index m . f)
 
 apRep :: Representable f => f (a -> b) -> f a -> f b
@@ -294,39 +321,39 @@ distributeRep wf = tabulate (\k -> fmap (`index` k) wf)
 collectRep :: (Representable f, Functor w) => (a -> f b) -> w a -> f (w b)
 collectRep f w = tabulate (\k -> (`index` k) . f <$> w)
 
-duplicateRepBy :: Representable f => (Rep f -> Rep f -> Rep f) -> f a -> f (f a)
+duplicateRepBy :: RepresentableOf rep f => (rep -> rep -> rep) -> f a -> f (f a)
 duplicateRepBy plus w = tabulate (\m -> tabulate (index w . plus m))
 
-extendRepBy :: Representable f => (Rep f -> Rep f -> Rep f) -> (f a -> b) -> f a -> f b
+extendRepBy :: RepresentableOf rep f => (rep -> rep -> rep) -> (f a -> b) -> f a -> f b
 extendRepBy plus f w = tabulate (\m -> f (tabulate (index w . plus m)))
 
-extractRepBy :: Representable f => (Rep f) -> f a -> a
+extractRepBy :: RepresentableOf rep f => rep -> f a -> a
 extractRepBy = flip index
 
-duplicatedRep :: (Representable f, Semigroup (Rep f)) => f a -> f (f a)
+duplicatedRep :: (RepresentableOf rep f, Semigroup rep) => f a -> f (f a)
 duplicatedRep = duplicateRepBy (<>)
 
-extendedRep :: (Representable f, Semigroup (Rep f)) => (f a -> b) -> f a -> f b
+extendedRep :: (RepresentableOf rep f, Semigroup rep) => (f a -> b) -> f a -> f b
 extendedRep = extendRepBy (<>)
 
-duplicateRep :: (Representable f, Monoid (Rep f)) => f a -> f (f a)
+duplicateRep :: (RepresentableOf rep f, Monoid rep) => f a -> f (f a)
 duplicateRep = duplicateRepBy mappend
 
-extendRep :: (Representable f, Monoid (Rep f)) => (f a -> b) -> f a -> f b
+extendRep :: (RepresentableOf rep f, Monoid rep) => (f a -> b) -> f a -> f b
 extendRep = extendRepBy mappend
 
-extractRep :: (Representable f, Monoid (Rep f)) => f a -> a
+extractRep :: (RepresentableOf rep f, Monoid rep) => f a -> a
 extractRep = extractRepBy mempty
 
-imapRep :: Representable r => (Rep r -> a -> a') -> (r a -> r a')
+imapRep :: RepresentableOf rep r => (rep -> a -> a') -> (r a -> r a')
 imapRep f xs = tabulate (f <*> index xs)
 
-ifoldMapRep :: forall r m a. (Representable r, Foldable r, Monoid m)
-            => (Rep r -> a -> m) -> (r a -> m)
-ifoldMapRep ix xs = fold (tabulate (\(i :: Rep r) -> ix i $ index xs i) :: r m)
+ifoldMapRep :: forall rep r m a. (RepresentableOf rep r, Foldable r, Monoid m)
+            => (rep -> a -> m) -> (r a -> m)
+ifoldMapRep ix xs = fold (tabulate (\(i :: rep) -> ix i $ index xs i) :: r m)
 
-itraverseRep :: forall r f a a'. (Representable r, Traversable r, Applicative f)
-             => (Rep r -> a -> f a') -> (r a -> f (r a'))
+itraverseRep :: forall rep r f a a'. (RepresentableOf rep r, Traversable r, Applicative f)
+             => (rep -> a -> f a') -> (r a -> f (r a'))
 itraverseRep ix xs = sequenceA $ tabulate (ix <*> index xs)
 
 -- * Instances
@@ -473,7 +500,7 @@ instance Representable f => Monad (Co f) where
   (>>=) = bindRep
 
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 704
-instance (Representable f, Rep f ~ a) => MonadReader a (Co f) where
+instance (Representable f, Rep f ~ rep) => MonadReader rep (Co f) where
   ask = askRep
   local = localRep
 #endif
