@@ -7,6 +7,7 @@ next
 * Add `Data.Functor.Contravariant.Rep.Representable` instances for `U1` and `(:*:)` from `GHC.Generics`
 * Add `collectRep` and `imapRep` functions to `Data.Functor.Rep`.
 * Add `MINIMAL` pragmas to the `Adjunction` classes.
+* Allow `free-5`.
 
 4.3
 ---
