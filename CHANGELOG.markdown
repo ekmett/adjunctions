@@ -1,5 +1,5 @@
-next
-----
+4.4 [2018.01.28]
+----------------
 * Added `imapRep`, `ifoldMapRep`, `itraverseRep` to make it easier to define representable `FunctorWithIndex`, `FoldableWithIndex`, `TraversableWithIndex` instances from the `lens` package.
 * Add `GHC.Generics`-based default implementation for `Data.Functor.Rep.Representable` instances
 * Add `Data.Functor.Rep.Representable` instances for `Backwards`, `Reverse`, and the datatypes in `GHC.Generics`.
