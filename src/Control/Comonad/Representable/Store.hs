@@ -43,7 +43,9 @@ import Control.Monad.Identity
 import Data.Functor.Apply
 import Data.Functor.Extend
 import Data.Functor.Rep
+#if !(MIN_VERSION_base(4,11,0))
 import Data.Semigroup
+#endif
 
 -- | A memoized store comonad parameterized by a representable functor @g@, where
 -- the representatation of @g@, @Rep g@ is the index of the store.
