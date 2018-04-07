@@ -42,7 +42,7 @@ import Data.Profunctor
 
 class (Contravariant f, Representable g) => Adjunction f g | f -> g, g -> f where
 #if __GLASGOW_HASKELL__ >= 708
-  {-# MINIMAL (unit, counit) | (leftAdjunct, rightAdjunct) #-}
+  {-# MINIMAL (unit | leftAdjunct), (rightAdjunct | counit) #-}
 #endif
   unit :: a -> g (f a) -- monad in Hask
   counit :: a -> f (g a) -- comonad in Hask^op
