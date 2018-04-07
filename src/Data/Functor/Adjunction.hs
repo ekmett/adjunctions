@@ -62,16 +62,25 @@ import GHC.Generics
 
 -- | An adjunction between Hask and Hask.
 --
--- Minimal definition: both 'unit' and 'counit' or both 'leftAdjunct'
--- and 'rightAdjunct', subject to the constraints imposed by the
--- default definitions that the following laws should hold.
+-- Minimal definitions require one of the following pairs of
+-- functions to be defined:
+--
+--   * 'unit' and 'counit'
+--
+--   * 'leftAdjunct' and 'rightAdjunct'
+--
+--   * 'unit' and 'rightAdjunct'
+--
+--   * 'leftAdjunct' and 'counit'
+--
+-- For any implementation, the following laws should hold:
 --
 -- > unit = leftAdjunct id
 -- > counit = rightAdjunct id
 -- > leftAdjunct f = fmap f . unit
 -- > rightAdjunct f = counit . fmap f
 --
--- Any implementation is required to ensure that 'leftAdjunct' and
+-- All implementations are required to ensure that 'leftAdjunct' and
 -- 'rightAdjunct' witness an isomorphism from @Nat (f a, b)@ to
 -- @Nat (a, g b)@
 --
@@ -80,7 +89,7 @@ import GHC.Generics
 class (Functor f, Representable u) =>
       Adjunction f u | f -> u, u -> f where
 #if __GLASGOW_HASKELL__ >= 708
-  {-# MINIMAL (unit, counit) | (leftAdjunct, rightAdjunct) #-}
+  {-# MINIMAL (unit | leftAdjunct), (rightAdjunct | counit) #-}
 #endif
   unit         :: a -> u (f a)
   counit       :: f (u a) -> a
