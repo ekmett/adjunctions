@@ -1,4 +1,6 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -29,7 +31,12 @@ module Data.Functor.Rep
   (
   -- * Representable Functors
     Representable(..)
+  , tabulateAlg
   , tabulated
+  -- * Logarithms
+  , Logarithm(..)
+  , contramapLogarithm
+  , logarithmRep
   -- * Wrapped representable functors
   , Co(..)
   -- * Default definitions
@@ -38,6 +45,7 @@ module Data.Functor.Rep
   -- ** Distributive
   , distributeRep
   , collectRep
+  , cotraverseRep
   -- ** Apply/Applicative
   , apRep
   , pureRep
@@ -68,8 +76,13 @@ module Data.Functor.Rep
   , imapRep
   , ifoldMapRep
   , itraverseRep
-
+  -- ** Representable
+  , tabulateCotraverse1
+  , indexLogarithm
+  , cotraverse1Iso
+  , cotraverse1Newtype
   -- ** Generics
+  , gcotraverse1
   , GRep
   , gindex
   , gtabulate
@@ -78,7 +91,6 @@ module Data.Functor.Rep
 
 import Control.Applicative
 import Control.Applicative.Backwards
-import Control.Arrow ((&&&))
 #if __GLASGOW_HASKELL__ >= 708
 import Data.Coerce
 #endif
@@ -99,6 +111,8 @@ import Data.Functor.Compose
 import Data.Functor.Extend
 import Data.Functor.Product
 import Data.Functor.Reverse
+import Data.Functor1
+import Data.Functor1.Applied
 import qualified Data.Monoid as Monoid
 import Data.Profunctor.Unsafe
 import Data.Proxy
@@ -107,11 +121,24 @@ import qualified Data.Sequence as Seq
 import Data.Semigroup hiding (Product)
 import Data.Tagged
 import Data.Traversable (Traversable(sequenceA))
+import Data.Type.Coercion
 import Data.Void
 import GHC.Generics hiding (Rep)
 import Prelude hiding (lookup)
 
--- | A 'Functor' @f@ is 'Representable' if 'tabulate' and 'index' witness an isomorphism to @(->) x@.
+-- | A 'Functor' @f@ is 'Representable' if 'tabulate' and 'index' witness an
+-- isomorphism to @(->) r@, for some @r@.
+--
+-- Alternatively, an instance can be derived from 'cotraverse1', by defining:
+--
+-- @
+-- 'Rep' f = 'Logarithm' f
+-- 'tabulate' = 'tabulateCotraverse1'
+-- 'index' = 'indexLogarithm'
+-- @
+--
+-- Instances without random access should implement 'cotraverse1', as it can
+-- allow asymptocially faster zipping.
 --
 -- Every 'Distributive' 'Functor' is actually 'Representable'.
 --
@@ -121,6 +148,13 @@ import Prelude hiding (lookup)
 -- 'tabulate' . 'index'  ≡ id
 -- 'index' . 'tabulate'  ≡ id
 -- 'tabulate' . 'return' ≡ 'return'
+--
+-- 'distribute1' . 'Applied' ≡ 'fmap' ('Applied' . 'Identity')
+-- 'distribute1' ('Const' x) ≡ 'Const' x '<$' xs
+--
+-- 'cotraverse1' f ≡ 'fmap' f . 'distribute1'
+-- 'collect1' f ≡ 'distribute1' . 'map1' f
+-- 'cotraverseMap1' f g ≡ 'cotraverse1' f . 'map1' g
 -- @
 
 class Distributive f => Representable f where
@@ -144,6 +178,35 @@ class Distributive f => Representable f where
   default index :: (Generic1 f, GRep f ~ Rep f, GIndex (Rep1 f))
                 => f a -> Rep f -> a
   index = gindex
+
+  -- | A more powerful version of 'cotraverse'
+  --
+  -- @'cotraverse1' f = 'fmap' f . 'distribute1'@
+  cotraverse1 :: Functor1 w => (w Identity -> a) -> w f -> f a
+  cotraverse1 f w = tabulateAlg (\g -> f $ map1Identity g w)
+
+  -- | A more powerful version of 'distribute'
+  --
+  -- @
+  -- 'distribute1' . 'Applied' ≡ 'fmap' ('Applied' . 'Identity')
+  -- 'distribute1' ('Const' x) ≡ 'Const' x '<$' xs
+  -- @
+  distribute1 :: Functor1 w => w f -> f (w Identity)
+  distribute1 = cotraverse1 id
+
+  -- | A more powerful version of 'collect'
+  --
+  -- @'collect1' f ≡ 'distribute1' . 'map1' f@
+  collect1 :: Functor1 w => (forall x. g x -> f x) -> w g -> f (w Identity)
+  collect1 f = distribute1 . map1 f
+
+  -- | @'cotraverseMap1' f g ≡ 'cotraverse1' f . 'map1' g@
+  cotraverseMap1 ::
+       Functor1 w => (w Identity -> a) -> (forall x. g x -> f x) -> w g -> f a
+  cotraverseMap1 f g = cotraverse1 f . map1 g
+
+tabulateAlg :: Representable f => ((forall x. f x -> x) -> a) -> f a
+tabulateAlg f = tabulate $ \i -> f (`index` i)
 
 -- | A default implementation of 'Rep' for a datatype that is an instance of
 -- 'Generic1'. This is usually composed of 'Either', tuples, unit tuples, and
@@ -259,25 +322,49 @@ tabulated :: (Representable f, Representable g, Profunctor p, Functor h)
 tabulated = dimap tabulate (fmap index)
 {-# INLINE tabulated #-}
 
+-- * Logarithms
+
+-- | Can be used as a value for 'Rep'
+newtype Logarithm f = Logarithm { runLogarithm :: forall x. f x -> x }
+
+contramapLogarithm :: (forall x. f x -> g x) -> Logarithm g -> Logarithm f
+contramapLogarithm f (Logarithm g) = Logarithm (g . f)
+
+-- | An index is equivalent to a function which gets the element at that index.
+--
+-- This can be used with the combinators from the @lens@ package.
+--
+-- @'logarithmRep' :: 'Representable' f => 'Iso' ('Logarithm' f) ('Rep' f)@
+logarithmRep ::
+  (Representable f, Representable g, Profunctor p, Functor h) =>
+  p (Rep f) (h (Rep g)) -> p (Logarithm f) (h (Logarithm g))
+logarithmRep =
+  dimap (\(Logarithm f) -> f askRep) (fmap (\x -> Logarithm (`index` x)))
+
 -- * Default definitions
 
 fmapRep :: Representable f => (a -> b) -> f a -> f b
-fmapRep f = tabulate . fmap f . index
+fmapRep f = cotraverse1 (f . runIdentity . runApplied) . Applied
 
 pureRep :: Representable f => a -> f a
 pureRep = tabulate . const
 
 bindRep :: Representable f => f a -> (a -> f b) -> f b
-bindRep m f = tabulate $ \a -> index (f (index m a)) a
+bindRep m f = distribute f `apRep` m
 
 mfixRep :: Representable f => (a -> f a) -> f a
-mfixRep = tabulate . mfix . fmap index
+mfixRep = cotraverseRep fix
+
+data PairOf a b f = PairOf (f a) (f b)
+instance Functor1 (PairOf a b) where
+  map1 f (PairOf x y) = PairOf (f x) (f y)
 
 mzipWithRep :: Representable f => (a -> b -> c) -> f a -> f b -> f c
-mzipWithRep f as bs = tabulate $ \k -> f (index as k) (index bs k)
+mzipWithRep f as bs =
+  cotraverse1 (\(PairOf (Identity a) (Identity b)) -> f a b) (PairOf as bs)
 
 mzipRep :: Representable f => f a -> f b -> f (a, b)
-mzipRep as bs = tabulate (index as &&& index bs)
+mzipRep = mzipWithRep (,)
 
 askRep :: Representable f => f (Rep f)
 askRep = tabulate id
@@ -286,13 +373,20 @@ localRep :: Representable f => (Rep f -> Rep f) -> f a -> f a
 localRep f m = tabulate (index m . f)
 
 apRep :: Representable f => f (a -> b) -> f a -> f b
-apRep f g = tabulate (index f <*> index g)
+apRep = mzipWithRep ($)
 
 distributeRep :: (Representable f, Functor w) => w (f a) -> f (w a)
-distributeRep wf = tabulate (\k -> fmap (`index` k) wf)
+distributeRep = cotraverseRep id
 
 collectRep :: (Representable f, Functor w) => (a -> f b) -> w a -> f (w b)
-collectRep f w = tabulate (\k -> (`index` k) . f <$> w)
+collectRep f = distributeRep . fmap f
+
+newtype Composed g a f = Composed { runComposed :: g (f a) }
+instance Functor g => Functor1 (Composed g a) where
+  map1 f = Composed . fmap f . runComposed
+
+cotraverseRep :: (Representable f, Functor w) => (w a -> b) -> w (f a) -> f b
+cotraverseRep f = cotraverse1 (f . fmap runIdentity . runComposed) . Composed
 
 duplicateRepBy :: Representable f => (Rep f -> Rep f -> Rep f) -> f a -> f (f a)
 duplicateRepBy plus w = tabulate (\m -> tabulate (index w . plus m))
@@ -300,7 +394,7 @@ duplicateRepBy plus w = tabulate (\m -> tabulate (index w . plus m))
 extendRepBy :: Representable f => (Rep f -> Rep f -> Rep f) -> (f a -> b) -> f a -> f b
 extendRepBy plus f w = tabulate (\m -> f (tabulate (index w . plus m)))
 
-extractRepBy :: Representable f => (Rep f) -> f a -> a
+extractRepBy :: Representable f => Rep f -> f a -> a
 extractRepBy = flip index
 
 duplicatedRep :: (Representable f, Semigroup (Rep f)) => f a -> f (f a)
@@ -318,16 +412,62 @@ extendRep = extendRepBy mappend
 extractRep :: (Representable f, Monoid (Rep f)) => f a -> a
 extractRep = extractRepBy mempty
 
-imapRep :: Representable r => (Rep r -> a -> a') -> (r a -> r a')
-imapRep f xs = tabulate (f <*> index xs)
+imapRep :: Representable r => (Rep r -> a -> b) -> r a -> r b
+imapRep f = mzipWithRep f askRep
 
 ifoldMapRep :: forall r m a. (Representable r, Foldable r, Monoid m)
             => (Rep r -> a -> m) -> (r a -> m)
-ifoldMapRep ix xs = fold (tabulate (\(i :: Rep r) -> ix i $ index xs i) :: r m)
+ifoldMapRep ix = fold . imapRep ix
 
 itraverseRep :: forall r f a a'. (Representable r, Traversable r, Applicative f)
              => (Rep r -> a -> f a') -> (r a -> f (r a'))
-itraverseRep ix xs = sequenceA $ tabulate (ix <*> index xs)
+itraverseRep ix = sequenceA . imapRep ix
+
+newtype TabulateArg a f = TabulateArg (Logarithm f -> a)
+instance Functor1 (TabulateArg a) where
+  map1 f (TabulateArg g) = TabulateArg (g . contramapLogarithm f)
+
+-- | Derive 'tabulate' given @'Rep' f ~ 'Logarithm' f@ and an
+-- implementation of 'cotraverse1'
+tabulateCotraverse1 :: Representable f => (Logarithm f -> a) -> f a
+tabulateCotraverse1 =
+  cotraverse1 (\(TabulateArg g) -> g (Logarithm runIdentity)) . TabulateArg
+
+-- | Derive 'index', given @'Rep' f ~ 'Logarithm' f@
+indexLogarithm :: f a -> Logarithm f -> a
+indexLogarithm = flip runLogarithm
+
+-- | Derive 'cotraverse1' via an isomorphism
+cotraverse1Iso ::
+     (Representable g, Functor1 w)
+  => (forall x. f x -> g x)
+  -> (forall x. g x -> f x)
+  -> (w Identity -> a)
+  -> w f
+  -> f a
+cotraverse1Iso t frm f = frm . cotraverseMap1 f t
+
+-- | Derive 'cotraverse1' for newtype wrappers of the form
+--
+-- @newtype Foo f a = Foo (f a)@
+cotraverse1Newtype ::
+     forall g f w a. (Coercible (f g) g, Representable g, Functor1 w)
+  => (w Identity -> a)
+  -> w (f g)
+  -> f g a
+cotraverse1Newtype = cotraverse1Iso (coerceWith c) (coerceWith (sym c))
+  where
+    c :: forall x. Coercion (f g x) (g x)
+    c =
+      -- the coercible solver apparently needs a little help. Is this a GHC bug?
+      Coercion :: forall h. Coercible h g => Coercion (h x) (g x)
+
+gcotraverse1 ::
+     (Representable (Rep1 f), Functor1 w, Generic1 f)
+  => (w Identity -> a)
+  -> w f
+  -> f a
+gcotraverse1 = cotraverse1Iso from1 to1
 
 -- * Instances
 
@@ -350,6 +490,7 @@ instance Representable m => Representable (IdentityT m) where
   type Rep (IdentityT m) = Rep m
   index = index .# runIdentityT
   tabulate = IdentityT #. tabulate
+  cotraverse1 = cotraverse1Newtype
 
 instance Representable ((->) e) where
   type Rep ((->) e) = e
@@ -360,22 +501,26 @@ instance Representable m => Representable (ReaderT e m) where
   type Rep (ReaderT e m) = (e, Rep m)
   index (ReaderT f) (e,k) = index (f e) k
   tabulate = ReaderT . fmap tabulate . curry
+  cotraverse1 = cotraverse1Iso (Comp1 . runReaderT) (ReaderT . unComp1)
 
 instance (Representable f, Representable g) => Representable (Compose f g) where
   type Rep (Compose f g) = (Rep f, Rep g)
   index (Compose fg) (i,j) = index (index fg i) j
   tabulate = Compose . tabulate . fmap tabulate . curry
+  cotraverse1 = cotraverse1Iso (Comp1 . getCompose) (Compose . unComp1)
 
 instance Representable w => Representable (TracedT s w) where
   type Rep (TracedT s w) = (s, Rep w)
   index (TracedT w) (e,k) = index w k e
   tabulate = TracedT . unCo . collect (Co #. tabulate) . curry
+  cotraverse1 = cotraverse1Iso (Comp1 . runTracedT) (TracedT . unComp1)
 
 instance (Representable f, Representable g) => Representable (Product f g) where
   type Rep (Product f g) = Either (Rep f) (Rep g)
   index (Pair a _) (Left i)  = index a i
   index (Pair _ b) (Right j) = index b j
   tabulate f = Pair (tabulate (f . Left)) (tabulate (f . Right))
+  cotraverse1 = cotraverse1Iso (\(Pair x y) -> x :*: y) (\(x :*: y) -> Pair x y)
 
 instance Representable f => Representable (Cofree f) where
   type Rep (Cofree f) = Seq (Rep f)
@@ -384,15 +529,34 @@ instance Representable f => Representable (Cofree f) where
       k Seq.:< ks -> index (index as k) ks
   tabulate f = f Seq.empty :< tabulate (\k -> tabulate (f . (k Seq.<|)))
 
+  -- this could be derived via isomorphism to
+  -- Identity :*: (f :.: Cofree f), but then the instance would be
+  -- recursive which would prevent specialization
+  cotraverse1 ::
+       forall w a. Functor1 w
+    => (w Identity -> a)
+    -> w (Cofree f)
+    -> Cofree f a
+  cotraverse1 f = go
+    where
+      go :: w (Cofree f) -> Cofree f a
+      go w =
+        f (map1Identity extract w) :<
+        cotraverse1
+          (go . map1 (runIdentity . unComp1) . runAppCompose)
+          (AppCompose $ map1 (Comp1 . unwrap) w)
+
 instance Representable f => Representable (Backwards f) where
   type Rep (Backwards f) = Rep f
   index = index .# forwards
   tabulate = Backwards #. tabulate
+  cotraverse1 = cotraverse1Newtype
 
 instance Representable f => Representable (Reverse f) where
   type Rep (Reverse f) = Rep f
   index = index .# getReverse
   tabulate = Reverse #. tabulate
+  cotraverse1 = cotraverse1Newtype
 
 instance Representable Monoid.Dual where
   type Rep Monoid.Dual = ()
@@ -426,11 +590,21 @@ instance (Representable f, Representable g) => Representable (f :*: g) where
   index (a :*: _) (Left  i) = index a i
   index (_ :*: b) (Right j) = index b j
   tabulate f = tabulate (f . Left) :*: tabulate (f . Right)
+  cotraverse1 f w =
+    cotraverseMap1 f (\(a :*: _) -> a) w :*: cotraverseMap1 f (\(_ :*: b) -> b) w
+
+newtype AppCompose w g f = AppCompose { runAppCompose :: w (f :.: g) }
+instance Functor1 w => Functor1 (AppCompose w g) where
+  map1 f = AppCompose . map1 (Comp1 . f . unComp1) . runAppCompose
 
 instance (Representable f, Representable g) => Representable (f :.: g) where
   type Rep (f :.: g) = (Rep f, Rep g)
   index (Comp1 fg) (i, j) = index (index fg i) j
   tabulate = Comp1 . tabulate . fmap tabulate . curry
+  cotraverse1 f w =
+    Comp1 $
+    cotraverse1 (cotraverseMap1 f (runIdentity . unComp1) . runAppCompose) $
+    AppCompose w
 
 instance Representable Par1 where
   type Rep Par1 = ()
@@ -441,11 +615,13 @@ instance Representable f => Representable (Rec1 f) where
   type Rep (Rec1 f) = Rep f
   index = index .# unRec1
   tabulate = Rec1 #. tabulate
+  cotraverse1 = cotraverse1Newtype
 
 instance Representable f => Representable (M1 i c f) where
   type Rep (M1 i c f) = Rep f
   index = index .# unM1
   tabulate = M1 #. tabulate
+  cotraverse1 = cotraverse1Newtype
 
 newtype Co f a = Co { unCo :: f a } deriving Functor
 
@@ -453,6 +629,7 @@ instance Representable f => Representable (Co f) where
   type Rep (Co f) = Rep f
   tabulate = Co #. tabulate
   index = index .# unCo
+  cotraverse1 = cotraverse1Newtype
 
 instance Representable f => Apply (Co f) where
   (<.>) = apRep
@@ -489,7 +666,14 @@ instance ComonadTrans Co where
   lower (Co f) = f
 
 liftR2 :: Representable f => (a -> b -> c) -> f a -> f b -> f c
-liftR2 f fa fb = tabulate $ \i -> f (index fa i) (index fb i)
+liftR2 = mzipWithRep
+
+data TripleOf a b c f = TripleOf (f a) (f b) (f c)
+instance Functor1 (TripleOf a b c) where
+  map1 f (TripleOf a b c) = TripleOf (f a) (f b) (f c)
 
 liftR3 :: Representable f => (a -> b -> c -> d) -> f a -> f b -> f c -> f d
-liftR3 f fa fb fc = tabulate $ \i -> f (index fa i) (index fb i) (index fc i)
+liftR3 f fa fb fc =
+  cotraverse1
+    (\(TripleOf (Identity a) (Identity b) (Identity c)) -> f a b c)
+    (TripleOf fa fb fc)

@@ -41,6 +41,7 @@ import Data.Traversable
 import Data.Semigroup
 import Data.Semigroup.Foldable
 import Data.Semigroup.Traversable
+import GHC.Generics hiding (Rep)
 import Prelude hiding (lookup,zipWith)
 
 type Reader f = ReaderT f Identity
@@ -65,6 +66,7 @@ instance (Representable f, Representable m) => Representable (ReaderT f m) where
   type Rep (ReaderT f m) = (Rep f, Rep m)
   tabulate = ReaderT . tabulate . fmap tabulate . curry
   index = uncurry . fmap index . index . getReaderT
+  cotraverse1 = cotraverse1Iso (Comp1 . getReaderT) (ReaderT . unComp1)
 
 instance (Representable f, Apply m) => Apply (ReaderT f m) where
   ReaderT ff <.> ReaderT fa = ReaderT (unCo ((<.>) <$> Co ff <.> Co fa))
@@ -74,13 +76,13 @@ instance (Representable f, Applicative m) => Applicative (ReaderT f m) where
   ReaderT ff <*> ReaderT fa = ReaderT (unCo ((<*>) <$> Co ff <*> Co fa))
 
 instance (Representable f, Bind m) => Bind (ReaderT f m) where
-  ReaderT fm >>- f = ReaderT $ tabulate (\a -> index fm a >>- flip index a . getReaderT . f)
+  ReaderT fm >>- f = ReaderT $ mzipWithRep (>>-) fm $ distribute (getReaderT . f)
 
 instance (Representable f, Monad m) => Monad (ReaderT f m) where
 #if __GLASGOW_HASKELL__ < 710
   return = ReaderT . pureRep . return
 #endif
-  ReaderT fm >>= f = ReaderT $ tabulate (\a -> index fm a >>= flip index a . getReaderT . f)
+  ReaderT fm >>= f = ReaderT $ mzipWithRep (>>=) fm $ distribute (getReaderT . f)
 
 #if __GLASGOW_HASKELL >= 704
 
@@ -97,7 +99,7 @@ instance Representable f => MonadTrans (ReaderT f) where
   lift = ReaderT . pureRep
 
 instance (Representable f, Distributive m) => Distributive (ReaderT f m) where
-  distribute = ReaderT . fmapRep distribute . unCo . collect (Co . getReaderT)
+  distribute = ReaderT . fmap distribute . unCo . collect (Co . getReaderT)
 
 instance (Representable f, Representable m, Semigroup (Rep f), Semigroup (Rep m)) => Extend (ReaderT f m) where
   extended = extendedRep
@@ -113,8 +115,8 @@ instance (Representable f, MonadIO m) => MonadIO (ReaderT f m) where
 
 instance (Representable f, MonadWriter w m) => MonadWriter w (ReaderT f m) where
   tell = lift . tell
-  listen (ReaderT m) = ReaderT $ tabulate $ Writer.listen . index m
-  pass (ReaderT m) = ReaderT $ tabulate $ Writer.pass . index m
+  listen = ReaderT . fmap listen . getReaderT
+  pass = ReaderT . fmap pass . getReaderT
 
 -- misc. instances that can exist, but aren't particularly about representability
 
