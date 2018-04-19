@@ -80,7 +80,6 @@ module Data.Functor.Rep
   , tabulateCotraverse1
   , indexLogarithm
   , cotraverse1Iso
-  , cotraverse1Newtype
   -- ** Generics
   , gcotraverse1
   , GRep
@@ -121,7 +120,6 @@ import qualified Data.Sequence as Seq
 import Data.Semigroup hiding (Product)
 import Data.Tagged
 import Data.Traversable (Traversable(sequenceA))
-import Data.Type.Coercion
 import Data.Void
 import GHC.Generics hiding (Rep)
 import Prelude hiding (lookup)
@@ -447,21 +445,6 @@ cotraverse1Iso ::
   -> f a
 cotraverse1Iso t frm f = frm . cotraverseMap1 f t
 
--- | Derive 'cotraverse1' for newtype wrappers of the form
---
--- @newtype Foo f a = Foo (f a)@
-cotraverse1Newtype ::
-     forall g f w a. (Coercible (f g) g, Representable g, Functor1 w)
-  => (w Identity -> a)
-  -> w (f g)
-  -> f g a
-cotraverse1Newtype = cotraverse1Iso (coerceWith c) (coerceWith (sym c))
-  where
-    c :: forall x. Coercion (f g x) (g x)
-    c =
-      -- the coercible solver apparently needs a little help. Is this a GHC bug?
-      Coercion :: forall h. Coercible h g => Coercion (h x) (g x)
-
 gcotraverse1 ::
      (Representable (Rep1 f), Functor1 w, Generic1 f)
   => (w Identity -> a)
@@ -490,7 +473,7 @@ instance Representable m => Representable (IdentityT m) where
   type Rep (IdentityT m) = Rep m
   index = index .# runIdentityT
   tabulate = IdentityT #. tabulate
-  cotraverse1 = cotraverse1Newtype
+  cotraverse1 = cotraverse1Iso runIdentityT IdentityT
 
 instance Representable ((->) e) where
   type Rep ((->) e) = e
@@ -550,13 +533,13 @@ instance Representable f => Representable (Backwards f) where
   type Rep (Backwards f) = Rep f
   index = index .# forwards
   tabulate = Backwards #. tabulate
-  cotraverse1 = cotraverse1Newtype
+  cotraverse1 = cotraverse1Iso forwards Backwards
 
 instance Representable f => Representable (Reverse f) where
   type Rep (Reverse f) = Rep f
   index = index .# getReverse
   tabulate = Reverse #. tabulate
-  cotraverse1 = cotraverse1Newtype
+  cotraverse1 = cotraverse1Iso getReverse Reverse
 
 instance Representable Monoid.Dual where
   type Rep Monoid.Dual = ()
@@ -615,13 +598,13 @@ instance Representable f => Representable (Rec1 f) where
   type Rep (Rec1 f) = Rep f
   index = index .# unRec1
   tabulate = Rec1 #. tabulate
-  cotraverse1 = cotraverse1Newtype
+  cotraverse1 = cotraverse1Iso unRec1 Rec1
 
 instance Representable f => Representable (M1 i c f) where
   type Rep (M1 i c f) = Rep f
   index = index .# unM1
   tabulate = M1 #. tabulate
-  cotraverse1 = cotraverse1Newtype
+  cotraverse1 = cotraverse1Iso unM1 M1
 
 newtype Co f a = Co { unCo :: f a } deriving Functor
 
@@ -629,7 +612,7 @@ instance Representable f => Representable (Co f) where
   type Rep (Co f) = Rep f
   tabulate = Co #. tabulate
   index = index .# unCo
-  cotraverse1 = cotraverse1Newtype
+  cotraverse1 = cotraverse1Iso unCo Co
 
 instance Representable f => Apply (Co f) where
   (<.>) = apRep
