@@ -77,6 +77,8 @@ library
     Data.Functor.Contravariant.Adjunction
     Data.Functor.Contravariant.Rep
     Data.Functor.Rep
+    Data.Functor1
+    Data.Functor1.Applied
 
   ghc-options: -Wall
 

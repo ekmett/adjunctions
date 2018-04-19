@@ -138,7 +138,7 @@ import Prelude hiding (lookup)
 -- @
 --
 -- Instances without random access should implement 'cotraverse1', as it can
--- allow asymptocially faster zipping.
+-- allow asymptotically faster zipping.
 --
 -- Every 'Distributive' 'Functor' is actually 'Representable'.
 --
