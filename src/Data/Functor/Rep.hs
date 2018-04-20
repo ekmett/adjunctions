@@ -1,5 +1,4 @@
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
@@ -515,14 +514,8 @@ instance Representable f => Representable (Cofree f) where
   -- this could be derived via isomorphism to
   -- Identity :*: (f :.: Cofree f), but then the instance would be
   -- recursive which would prevent specialization
-  cotraverse1 ::
-       forall w a. Functor1 w
-    => (w Identity -> a)
-    -> w (Cofree f)
-    -> Cofree f a
   cotraverse1 f = go
     where
-      go :: w (Cofree f) -> Cofree f a
       go w =
         f (map1Identity extract w) :<
         cotraverse1
