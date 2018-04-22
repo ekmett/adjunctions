@@ -23,7 +23,6 @@ module Control.Comonad.Contra.Adjoint
   , AdjointT(..)
   ) where
 
-import Prelude hiding (sequence)
 import Control.Comonad
 import Control.Monad (liftM)
 import Data.Functor.Identity

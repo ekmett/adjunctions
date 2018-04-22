@@ -6,12 +6,10 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE Trustworthy #-}
-{-# LANGUAGE TypeOperators #-}
 {-# OPTIONS_GHC -fenable-rewrite-rules #-}
 ----------------------------------------------------------------------
 -- |
@@ -121,7 +119,7 @@ import Data.Tagged
 import Data.Traversable (Traversable(sequenceA))
 import Data.Void
 import GHC.Generics hiding (Rep)
-import Prelude hiding (lookup)
+import Prelude
 
 -- | A 'Functor' @f@ is 'Representable' if 'tabulate' and 'index' witness an
 -- isomorphism to @(->) r@, for some @r@.
@@ -248,7 +246,7 @@ instance (GIndex f, GIndex g) => GIndex (f :*: g) where
 
 type instance GRep' (f :.: g) = (WrappedRep f, GRep' g)
 instance (Representable f, GTabulate g) => GTabulate (f :.: g) where
-  gtabulate' f = Comp1 $ tabulate $ fmap gtabulate' $ fmap (curry f) WrapRep
+  gtabulate' f = Comp1 $ tabulate $ gtabulate' <$> fmap (curry f) WrapRep
 instance (Representable f, GIndex g) => GIndex (f :.: g) where
   gindex' (Comp1 fg) (i, j) = gindex' (index fg (unwrapRep i)) j
 

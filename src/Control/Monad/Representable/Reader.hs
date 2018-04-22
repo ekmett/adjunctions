@@ -25,24 +25,29 @@ module Control.Monad.Representable.Reader
   , module Data.Functor.Rep
   ) where
 
+#if __GLASGOW_HASKELL__ < 710
 import Control.Applicative
+#endif
 import Control.Comonad
 import Control.Monad.Reader.Class
 import Control.Monad.Writer.Class as Writer
 import Control.Monad.Trans.Class
 import Control.Monad.IO.Class
 import Data.Distributive
+#if __GLASGOW_HASKELL__ < 710
+import Data.Foldable
+#endif
 import Data.Functor.Bind
 import Data.Functor.Extend
 import Data.Functor.Identity
 import Data.Functor.Rep
-import Data.Foldable
+#if __GLASGOW_HASKELL__ < 710
 import Data.Traversable
 import Data.Semigroup
+#endif
 import Data.Semigroup.Foldable
 import Data.Semigroup.Traversable
 import GHC.Generics hiding (Rep)
-import Prelude hiding (lookup,zipWith)
 
 type Reader f = ReaderT f Identity
 

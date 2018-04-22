@@ -32,7 +32,7 @@ module Control.Monad.Trans.Conts
   , callCC
   ) where
 
-import Prelude hiding (sequence)
+import Prelude
 #if __GLASGOW_HASKELL__ < 710
 import Control.Applicative
 #endif

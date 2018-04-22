@@ -30,7 +30,7 @@ import Data.Functor.Product
 import Data.Profunctor
 import Data.Proxy
 import GHC.Generics hiding (Rep)
-import Prelude hiding (lookup)
+import Prelude
 
 -- | A 'Contravariant' functor @f@ is 'Representable' if 'tabulate' and 'index' witness an isomorphism to @(_ -> Rep f)@.
 --

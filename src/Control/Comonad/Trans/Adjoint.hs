@@ -21,7 +21,6 @@ module Control.Comonad.Trans.Adjoint
   , AdjointT(..)
   ) where
 
-import Prelude hiding (sequence)
 #if __GLASGOW_HASKELL__ < 710
 import Control.Applicative
 #endif

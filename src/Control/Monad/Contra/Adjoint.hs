@@ -23,7 +23,6 @@ module Control.Monad.Contra.Adjoint
   , AdjointT(..)
   ) where
 
-import Prelude hiding (sequence)
 import Control.Applicative
 import Control.Comonad
 import Control.Monad (ap)

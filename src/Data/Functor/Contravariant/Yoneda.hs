@@ -20,13 +20,13 @@ module Data.Functor.Contravariant.Yoneda
   , maxF, minF
   ) where
 
-import Prelude hiding (sequence)
+import Prelude
 import Data.Functor.Identity
 import Data.Functor.Contravariant.Adjunction
 import Data.Functor.Contravariant.DualAdjunction
 import Data.Functor.Contravariant
 import Data.Distributive
-import Text.Read hiding (lift)
+import Text.Read
 
 -- | The covariant Yoneda lemma applied to a contravariant functor
 
