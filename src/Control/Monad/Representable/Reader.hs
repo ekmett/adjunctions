@@ -43,6 +43,8 @@ import Data.Functor.Identity
 import Data.Functor.Rep
 #if __GLASGOW_HASKELL__ < 710
 import Data.Traversable
+#endif
+#if !(MIN_VERSION_base(4,11,0))
 import Data.Semigroup
 #endif
 import Data.Semigroup.Foldable
