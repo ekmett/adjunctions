@@ -1,3 +1,8 @@
+next [????.??.??]
+-----------------
+* Use more concise `MINIMAL` defaults for the `Adjunction` classes.
+* TODO: Describe `cotraverse1`-related changes
+
 4.4 [2018.01.28]
 ----------------
 * Added `imapRep`, `ifoldMapRep`, `itraverseRep` to make it easier to define representable `FunctorWithIndex`, `FoldableWithIndex`, `TraversableWithIndex` instances from the `lens` package.
