@@ -2,6 +2,8 @@ next [????.??.??]
 -----------------
 * Use more concise `MINIMAL` defaults for the `Adjunction` classes.
 * TODO: Describe `cotraverse1`-related changes
+* The dependencies on `semigroups` and `void` are both now conditional
+  on the GHC version being old enough that they're not in `base`.
 
 4.4 [2018.01.28]
 ----------------
