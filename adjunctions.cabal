@@ -58,13 +58,17 @@ library
     profunctors         >= 4       && < 6,
     tagged              >= 0.7     && < 1,
     semigroupoids       >= 4       && < 6,
-    semigroups          >= 0.11    && < 1,
     transformers        >= 0.2     && < 0.6,
-    transformers-compat >= 0.3     && < 1,
-    void                >= 0.5.5.1 && < 1
+    transformers-compat >= 0.3     && < 1
 
   if impl(ghc < 7.6)
     build-depends: ghc-prim
+
+  if !impl(ghc >= 7.10)
+    build-depends: void >= 0.5.5.1 && < 1
+
+  if !impl(ghc >= 8.0)
+    build-depends: semigroups >= 0.11 && < 1
 
   exposed-modules:
     Control.Comonad.Representable.Store
