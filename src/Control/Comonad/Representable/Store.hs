@@ -60,8 +60,8 @@ store :: Representable g
       -> Store g a
 store = storeT . Identity
 
--- | Unwrap a state monad computation as a function.
--- (The inverse of 'state'.)
+-- | Unwrap a store comonad computation as a function and a current index.
+-- (The inverse of 'store'.)
 runStore :: Representable g
          => Store g a           -- ^ a store to access
          -> (Rep g -> a, Rep g) -- ^ initial state
