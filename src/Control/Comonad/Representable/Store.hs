@@ -122,3 +122,7 @@ instance (ComonadEnv m w, Representable g) => ComonadEnv m (StoreT g w) where
 
 instance (Representable g, ComonadCofree f w) => ComonadCofree f (StoreT g w) where
   unwrap (StoreT w s) = fmap (`StoreT` s) (unwrap w)
+
+-- | The most basic `Store` comonad, built from a `Representable`, using `index` as the underlying function.
+repStore :: Representable g => g a -> Rep g -> Store g a
+repStore = store . index
