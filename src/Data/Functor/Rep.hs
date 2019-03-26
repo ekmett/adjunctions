@@ -30,6 +30,7 @@ module Data.Functor.Rep
     Representable(..)
   , tabulateAlg
   , tabulated
+  , rix
   -- * Logarithms
   , Logarithm(..)
   , contramapLogarithm
@@ -316,6 +317,20 @@ tabulated :: (Representable f, Representable g, Profunctor p, Functor h)
           => p (f a) (h (g b)) -> p (Rep f -> a) (h (Rep g -> b))
 tabulated = dimap tabulate (fmap index)
 {-# INLINE tabulated #-}
+
+-- | @Lens@ into 'Representable'.
+--
+-- @
+-- 'rix' :: ('Representable' f, Eq ('Rep' f)) => 'Rep' f -> Lens' (f a) a
+-- @
+--
+rix :: (Functor g, Representable f, Eq (Rep f)) => Rep f -> (a -> g a) -> f a -> g (f a)
+rix i agb fa = setter <$> agb (index fa i) where
+    setter b = tabulate $ \i' ->
+        if i == i'
+        then b
+        else index fa i'
+{-# INLINE rix #-}
 
 -- * Logarithms
 
