@@ -55,8 +55,26 @@ class Contravariant f => Representable f where
   contramapWithRep :: (b -> Either a (Rep f)) -> f a -> f b
   contramapWithRep f p = tabulate $ either (index p) id . f
 
+
+-- Aliases are needed to avoid GHC's automatic method inlining rules:
+tabulateRULE :: Representable f => (a -> Rep f) -> f a
+tabulateRULE = tabulate
+{-# INLINE [1] tabulateRULE #-}
+
+indexRULE :: Representable f => f a -> a -> Rep f
+indexRULE = index
+{-# INLINE [1] indexRULE #-}
+
 {-# RULES
-"tabulate/index" forall t. tabulate (index t) = t #-}
+"tabulate/index" forall t. tabulateRULE (indexRULE t) = t
+;
+"index/tabulate" forall t. indexRULE (tabulateRULE t) = t
+;
+"Don't inline tabulate early." [~1] tabulate = tabulateRULE
+;
+"Don't inline index early." [~1] index = indexRULE
+  #-}
+
 
 -- | 'tabulate' and 'index' form two halves of an isomorphism.
 --
