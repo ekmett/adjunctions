@@ -22,8 +22,7 @@ extra-source-files:
   travis/config
   CHANGELOG.markdown
   README.markdown
-tested-with:   GHC == 7.4.2
-             , GHC == 7.6.3
+tested-with:   GHC == 7.6.3
              , GHC == 7.8.4
              , GHC == 7.10.3
              , GHC == 8.0.2
@@ -49,12 +48,13 @@ library
 
   build-depends:
     array               >= 0.3.0.2 && < 0.7,
-    base                >= 4       && < 5,
+    base                >= 4.6     && < 5,
     comonad             >= 4       && < 6,
     containers          >= 0.3     && < 0.7,
     contravariant       >= 1       && < 2,
     distributive        >= 0.5.1   && < 1,
     free                >= 4       && < 6,
+    hkd                 >= 0       && < 1,
     mtl                 >= 2.0.1   && < 2.3,
     profunctors         >= 4       && < 6,
     tagged              >= 0.7     && < 1,
@@ -83,8 +83,6 @@ library
     Data.Functor.Contravariant.Adjunction
     Data.Functor.Contravariant.Rep
     Data.Functor.Rep
-    Data.Functor1
-    Data.Functor1.Applied
 
   ghc-options: -Wall
 

@@ -32,7 +32,6 @@ module Data.Functor.Rep
   , tabulated
   -- * Logarithms
   , Logarithm(..)
-  , contramapLogarithm
   , logarithmRep
   -- * Wrapped representable functors
   , Co(..)
@@ -102,13 +101,12 @@ import Data.Complex
 import Data.Distributive
 import Data.Foldable (Foldable(fold))
 import Data.Functor.Bind
-import Data.Functor.Identity
 import Data.Functor.Compose
+import Data.Functor.Identity
 import Data.Functor.Extend
 import Data.Functor.Product
 import Data.Functor.Reverse
-import Data.Functor1
-import Data.Functor1.Applied
+import Data.HKD (FFunctor (..), Element (..), Logarithm (..), fcontramap)
 import qualified Data.Monoid as Monoid
 import Data.Profunctor.Unsafe
 import Data.Proxy
@@ -144,12 +142,12 @@ import Prelude
 -- 'index' . 'tabulate'  ≡ id
 -- 'tabulate' . 'return' ≡ 'return'
 --
--- 'distribute1' . 'Applied' ≡ 'fmap' ('Applied' . 'Identity')
+-- 'distribute1' . 'Element' ≡ 'fmap' ('Element' . 'Identity')
 -- 'distribute1' ('Const' x) ≡ 'Const' x '<$' xs
 --
 -- 'cotraverse1' f ≡ 'fmap' f . 'distribute1'
--- 'collect1' f ≡ 'distribute1' . 'map1' f
--- 'cotraverseMap1' f g ≡ 'cotraverse1' f . 'map1' g
+-- 'collect1' f ≡ 'distribute1' . 'ffmap' f
+-- 'cotraverseffmap' f g ≡ 'cotraverse1' f . 'ffmap' g
 -- @
 
 class Distributive f => Representable f where
@@ -177,28 +175,28 @@ class Distributive f => Representable f where
   -- | A more powerful version of 'cotraverse'
   --
   -- @'cotraverse1' f = 'fmap' f . 'distribute1'@
-  cotraverse1 :: Functor1 w => (w Identity -> a) -> w f -> f a
-  cotraverse1 f w = tabulateAlg (\g -> f $ map1Identity g w)
+  cotraverse1 :: FFunctor w => (w Identity -> a) -> w f -> f a
+  cotraverse1 f w = tabulateAlg (\g -> f $ ffmapIdentity g w)
 
   -- | A more powerful version of 'distribute'
   --
   -- @
-  -- 'distribute1' . 'Applied' ≡ 'fmap' ('Applied' . 'Identity')
+  -- 'distribute1' . 'Element' ≡ 'fmap' ('Element' . 'Identity')
   -- 'distribute1' ('Const' x) ≡ 'Const' x '<$' xs
   -- @
-  distribute1 :: Functor1 w => w f -> f (w Identity)
+  distribute1 :: FFunctor w => w f -> f (w Identity)
   distribute1 = cotraverse1 id
 
   -- | A more powerful version of 'collect'
   --
-  -- @'collect1' f ≡ 'distribute1' . 'map1' f@
-  collect1 :: Functor1 w => (forall x. g x -> f x) -> w g -> f (w Identity)
-  collect1 f = distribute1 . map1 f
+  -- @'collect1' f ≡ 'distribute1' . 'ffmap' f@
+  collect1 :: FFunctor w => (forall x. g x -> f x) -> w g -> f (w Identity)
+  collect1 f = distribute1 . ffmap f
 
-  -- | @'cotraverseMap1' f g ≡ 'cotraverse1' f . 'map1' g@
-  cotraverseMap1 ::
-       Functor1 w => (w Identity -> a) -> (forall x. g x -> f x) -> w g -> f a
-  cotraverseMap1 f g = cotraverse1 f . map1 g
+  -- | @'cotraverseffmap' f g ≡ 'cotraverse1' f . 'ffmap' g@
+  cotraverseffmap ::
+       FFunctor w => (w Identity -> a) -> (forall x. g x -> f x) -> w g -> f a
+  cotraverseffmap f g = cotraverse1 f . ffmap g
 
 tabulateAlg :: Representable f => ((forall x. f x -> x) -> a) -> f a
 tabulateAlg f = tabulate $ \i -> f (`index` i)
@@ -319,12 +317,6 @@ tabulated = dimap tabulate (fmap index)
 
 -- * Logarithms
 
--- | Can be used as a value for 'Rep'
-newtype Logarithm f = Logarithm { runLogarithm :: forall x. f x -> x }
-
-contramapLogarithm :: (forall x. f x -> g x) -> Logarithm g -> Logarithm f
-contramapLogarithm f (Logarithm g) = Logarithm (g . f)
-
 -- | An index is equivalent to a function which gets the element at that index.
 --
 -- This can be used with the combinators from the @lens@ package.
@@ -339,7 +331,7 @@ logarithmRep =
 -- * Default definitions
 
 fmapRep :: Representable f => (a -> b) -> f a -> f b
-fmapRep f = cotraverse1 (f . runIdentity . runApplied) . Applied
+fmapRep f = cotraverse1 (f . runIdentity . runElement) . Element
 
 pureRep :: Representable f => a -> f a
 pureRep = tabulate . const
@@ -351,8 +343,8 @@ mfixRep :: Representable f => (a -> f a) -> f a
 mfixRep = cotraverseRep fix
 
 data PairOf a b f = PairOf (f a) (f b)
-instance Functor1 (PairOf a b) where
-  map1 f (PairOf x y) = PairOf (f x) (f y)
+instance FFunctor (PairOf a b) where
+  ffmap f (PairOf x y) = PairOf (f x) (f y)
 
 mzipWithRep :: Representable f => (a -> b -> c) -> f a -> f b -> f c
 mzipWithRep f as bs =
@@ -377,8 +369,8 @@ collectRep :: (Representable f, Functor w) => (a -> f b) -> w a -> f (w b)
 collectRep f = distributeRep . fmap f
 
 newtype Composed g a f = Composed { runComposed :: g (f a) }
-instance Functor g => Functor1 (Composed g a) where
-  map1 f = Composed . fmap f . runComposed
+instance Functor g => FFunctor (Composed g a) where
+  ffmap f = Composed . fmap f . runComposed
 
 cotraverseRep :: (Representable f, Functor w) => (w a -> b) -> w (f a) -> f b
 cotraverseRep f = cotraverse1 (f . fmap runIdentity . runComposed) . Composed
@@ -419,8 +411,8 @@ itraverseRep :: forall r f a a'. (Representable r, Traversable r, Applicative f)
 itraverseRep ix = sequenceA . imapRep ix
 
 newtype TabulateArg a f = TabulateArg (Logarithm f -> a)
-instance Functor1 (TabulateArg a) where
-  map1 f (TabulateArg g) = TabulateArg (g . contramapLogarithm f)
+instance FFunctor (TabulateArg a) where
+  ffmap f (TabulateArg g) = TabulateArg (g . fcontramap f)
 
 -- | Derive 'tabulate' given @'Rep' f ~ 'Logarithm' f@ and an
 -- implementation of 'cotraverse1'
@@ -434,16 +426,16 @@ indexLogarithm = flip runLogarithm
 
 -- | Derive 'cotraverse1' via an isomorphism
 cotraverse1Iso ::
-     (Representable g, Functor1 w)
+     (Representable g, FFunctor w)
   => (forall x. f x -> g x)
   -> (forall x. g x -> f x)
   -> (w Identity -> a)
   -> w f
   -> f a
-cotraverse1Iso t frm f = frm . cotraverseMap1 f t
+cotraverse1Iso t frm f = frm . cotraverseffmap f t
 
 gcotraverse1 ::
-     (Representable (Rep1 f), Functor1 w, Generic1 f)
+     (Representable (Rep1 f), FFunctor w, Generic1 f)
   => (w Identity -> a)
   -> w f
   -> f a
@@ -515,10 +507,10 @@ instance Representable f => Representable (Cofree f) where
   cotraverse1 f = go
     where
       go w =
-        f (map1Identity extract w) :<
+        f (ffmapIdentity extract w) :<
         cotraverse1
-          (go . map1 (runIdentity . unComp1) . runAppCompose)
-          (AppCompose $ map1 (Comp1 . unwrap) w)
+          (go . ffmap (runIdentity . unComp1) . runAppCompose)
+          (AppCompose $ ffmap (Comp1 . unwrap) w)
 
 instance Representable f => Representable (Backwards f) where
   type Rep (Backwards f) = Rep f
@@ -565,11 +557,11 @@ instance (Representable f, Representable g) => Representable (f :*: g) where
   index (_ :*: b) (Right j) = index b j
   tabulate f = tabulate (f . Left) :*: tabulate (f . Right)
   cotraverse1 f w =
-    cotraverseMap1 f (\(a :*: _) -> a) w :*: cotraverseMap1 f (\(_ :*: b) -> b) w
+    cotraverseffmap f (\(a :*: _) -> a) w :*: cotraverseffmap f (\(_ :*: b) -> b) w
 
 newtype AppCompose w g f = AppCompose { runAppCompose :: w (f :.: g) }
-instance Functor1 w => Functor1 (AppCompose w g) where
-  map1 f = AppCompose . map1 (Comp1 . f . unComp1) . runAppCompose
+instance FFunctor w => FFunctor (AppCompose w g) where
+  ffmap f = AppCompose . ffmap (Comp1 . f . unComp1) . runAppCompose
 
 instance (Representable f, Representable g) => Representable (f :.: g) where
   type Rep (f :.: g) = (Rep f, Rep g)
@@ -577,7 +569,7 @@ instance (Representable f, Representable g) => Representable (f :.: g) where
   tabulate = Comp1 . tabulate . fmap tabulate . curry
   cotraverse1 f w =
     Comp1 $
-    cotraverse1 (cotraverseMap1 f (runIdentity . unComp1) . runAppCompose) $
+    cotraverse1 (cotraverseffmap f (runIdentity . unComp1) . runAppCompose) $
     AppCompose w
 
 instance Representable Par1 where
@@ -643,11 +635,14 @@ liftR2 :: Representable f => (a -> b -> c) -> f a -> f b -> f c
 liftR2 = mzipWithRep
 
 data TripleOf a b c f = TripleOf (f a) (f b) (f c)
-instance Functor1 (TripleOf a b c) where
-  map1 f (TripleOf a b c) = TripleOf (f a) (f b) (f c)
+instance FFunctor (TripleOf a b c) where
+  ffmap f (TripleOf a b c) = TripleOf (f a) (f b) (f c)
 
 liftR3 :: Representable f => (a -> b -> c -> d) -> f a -> f b -> f c -> f d
 liftR3 f fa fb fc =
   cotraverse1
     (\(TripleOf (Identity a) (Identity b) (Identity c)) -> f a b c)
     (TripleOf fa fb fc)
+
+ffmapIdentity :: FFunctor w => (forall x. f x -> x) -> w f -> w Identity
+ffmapIdentity f = ffmap (Identity . f)
