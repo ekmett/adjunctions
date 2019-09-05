@@ -9,7 +9,14 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE DefaultSignatures #-}
-{-# LANGUAGE Trustworthy #-}
+{-# LANGUAGE Unsafe #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE StandaloneDeriving #-}
+#if __GLASGOW_HASKELL__ >= 806
+{-# LANGUAGE QuantifiedConstraints #-}
+#elif __GLASGOW_HASKELL__ >= 708
+{-# LANGUAGE ConstraintKinds #-}
+#endif
 {-# OPTIONS_GHC -fenable-rewrite-rules #-}
 ----------------------------------------------------------------------
 -- |
@@ -24,10 +31,12 @@
 -- of properties for free.
 ----------------------------------------------------------------------
 
-module Data.Functor.Rep
+module Data.Functor.Rep.Internal
   (
   -- * Representable Functors
     Representable(..)
+  , cotraverse1
+  , distribute1
   , tabulateAlg
   , tabulated
   -- * Logarithms
@@ -76,9 +85,10 @@ module Data.Functor.Rep
   -- ** Representable
   , tabulateCotraverse1
   , indexLogarithm
-  , cotraverse1Iso
+  , cotraverseMap1Iso
+  , cotraverseMap1Coerce
   -- ** Generics
-  , gcotraverse1
+  , gcotraverseMap1
   , GRep
   , gindex
   , gtabulate
@@ -119,6 +129,13 @@ import Data.Tagged
 import Data.Traversable (Traversable(sequenceA))
 import Data.Void
 import GHC.Generics hiding (Rep)
+#if __GLASGOW_HASKELL__ < 708
+import Unsafe.Coerce
+#elif __GLASGOW_HASKELL__ < 806
+import Data.Constraint ((:-) (..), Dict (..))
+import Data.Constraint.Forall (Forall, inst)
+import Data.Type.Coercion (Coercion (..), sym)
+#endif
 import Prelude
 
 -- | A 'Functor' @f@ is 'Representable' if 'tabulate' and 'index' witness an
@@ -174,34 +191,32 @@ class Distributive f => Representable f where
                 => f a -> Rep f -> a
   index = gindex
 
-  -- | A more powerful version of 'cotraverse'
-  --
-  -- @'cotraverse1' f = 'fmap' f . 'distribute1'@
-  cotraverse1 :: Functor1 w => (w Identity -> a) -> w f -> f a
-  cotraverse1 f w = tabulateAlg (\g -> f $ map1Identity g w)
-
-  -- | A more powerful version of 'distribute'
-  --
-  -- @
-  -- 'distribute1' . 'Applied' ≡ 'fmap' ('Applied' . 'Identity')
-  -- 'distribute1' ('Const' x) ≡ 'Const' x '<$' xs
-  -- @
-  distribute1 :: Functor1 w => w f -> f (w Identity)
-  distribute1 = cotraverse1 id
-
   -- | A more powerful version of 'collect'
   --
   -- @'collect1' f ≡ 'distribute1' . 'map1' f@
   collect1 :: Functor1 w => (forall x. g x -> f x) -> w g -> f (w Identity)
-  collect1 f = distribute1 . map1 f
+  collect1 f = cotraverseMap1 id f
 
-  -- | @'cotraverseMap1' f g ≡ 'cotraverse1' f . 'map1' g@
   cotraverseMap1 ::
        Functor1 w => (w Identity -> a) -> (forall x. g x -> f x) -> w g -> f a
-  cotraverseMap1 f g = cotraverse1 f . map1 g
+  cotraverseMap1 f g w = tabulateAlg $ \fxx -> f $ map1 (Identity . fxx . g) w
 
 tabulateAlg :: Representable f => ((forall x. f x -> x) -> a) -> f a
 tabulateAlg f = tabulate $ \i -> f (`index` i)
+
+-- | A more powerful version of 'cotraverse'
+cotraverse1 :: (Representable f, Functor1 w) => (w Identity -> a) -> w f -> f a
+cotraverse1 f = cotraverseMap1 f id
+
+-- | A more powerful version of 'distribute'
+--
+-- @
+-- 'distribute1' . 'Applied' ≡ 'fmap' ('Applied' . 'Identity')
+-- 'distribute1' ('Const' x) ≡ 'Const' x '<$' xs
+-- @
+distribute1 :: (Representable f, Functor1 w) => w f -> f (w Identity)
+distribute1 = cotraverse1 id
+
 
 -- | A default implementation of 'Rep' for a datatype that is an instance of
 -- 'Generic1'. This is usually composed of 'Either', tuples, unit tuples, and
@@ -432,22 +447,92 @@ tabulateCotraverse1 =
 indexLogarithm :: f a -> Logarithm f -> a
 indexLogarithm = flip runLogarithm
 
--- | Derive 'cotraverse1' via an isomorphism
-cotraverse1Iso ::
-     (Representable g, Functor1 w)
-  => (forall x. f x -> g x)
-  -> (forall x. g x -> f x)
-  -> (w Identity -> a)
-  -> w f
-  -> f a
-cotraverse1Iso t frm f = frm . cotraverseMap1 f t
+cotraverseMap1Iso ::
+     (Representable f', Functor1 w)
+  => (forall x. f x -> f' x)
+  -> (f' a -> f a)
+  -> (w Identity -> a) -> (forall x. g x -> f x) -> w g -> f a
+cotraverseMap1Iso too frm f g = frm . cotraverseMap1 f (too . g)
 
-gcotraverse1 ::
+gcotraverseMap1 ::
      (Representable (Rep1 f), Functor1 w, Generic1 f)
-  => (w Identity -> a)
-  -> w f
-  -> f a
-gcotraverse1 = cotraverse1Iso from1 to1
+  => (w Identity -> a) -> (forall x. g x -> f x) -> w g -> f a
+gcotraverseMap1 = cotraverseMap1Iso from1 to1
+
+-- | A version of 'cotraverseMap1Iso' when the isomorphism is actually a
+-- coercion. This function is only exported from "Data.Functor.Rep" for GHC >=
+-- 8.6. A completely unsafe version is available in "Data.Functor.Rep.Internal"
+-- for earlier GHC versions.
+#if __GLASGOW_HASKELL__ >= 806
+cotraverseMap1Coerce ::
+     ( Representable f', Functor1 w
+     , forall x. Coercible (f' x) (f x) )
+  => (forall x. f' x `arr` f x)
+  -> (w Identity -> a) -> (forall x. g x -> f x) -> w g -> f a
+cotraverseMap1Coerce frm f g = coerce $ cotraverseMap1 f (flop frm #. g)
+
+flop :: Coercible a b => (a `arr` b) -> b -> a
+flop _ = coerce
+
+#elif __GLASGOW_HASKELL__ >= 708
+-- You don't really want to read this. So sorry. Coercible handling was
+-- incredibly flaky and inconsistent up until around 8.4.
+
+cotraverseMap1Coerce ::
+     ( Representable f', Functor1 w
+     , Coercible (f' a) (f a)
+     , Forall (Coerce1 f' f) )
+  => (forall x. f' x `arr` f x)
+  -> (w Identity -> a) -> (forall x. g x -> f x) -> w g -> f a
+cotraverseMap1Coerce (_frm :: forall (x :: *). (f' :: * -> *) x `arr` f x) f (g :: forall (x :: *). g x -> f x)
+  = coerceResult
+#  if (__GLASGOW_HASKELL__ >= 710) && (__GLASGOW_HASKELL__ < 800)
+      -- Don't ask me.
+      (sym Coercion)
+#  else
+      Coercion
+#  endif
+      $ cotraverseMap1 f g'
+      where
+        g' :: forall x. g x -> f' x
+        g' = coerceResult (case co of Sub d -> glo d) g
+          where co :: Forall (Coerce1 f' f) :- Coerce1 f' f x
+                co = inst
+
+        glo :: forall x. Dict (Coerce1 f' f x) -> Coercion (f x) (f' x)
+        glo d = sym $ glo'' $ glo' d
+
+        glo' :: forall x. Dict (Coerce1 f' f x) -> Dict (Coercible (f' x) (f x))
+        glo' Dict = Dict
+
+        glo'' :: forall x y. Dict (Coercible x y) -> Coercion x y
+        glo'' Dict = Coercion
+
+class Coercible (f a) (f' a) => Coerce1 f f' a
+instance Coercible (f a) (f' a) => Coerce1 f f' a
+
+coerceResult :: Coercion p q -> (a -> p) -> a -> q
+coerceResult Coercion f = coerce f
+
+#else
+-- This is very dangerous!
+cotraverseMap1Coerce ::
+     ( Representable f', Functor1 w )
+  => (f' a `arr` f a)
+  -> (w Identity -> a) -> (forall x. g x -> f x) -> w g -> f a
+cotraverseMap1Coerce frm f g
+  = cotraverseMap1Iso (flop frm) (upgrade frm) f g
+
+flop ::
+     (f' a `arr` f a)
+  -> f x -> f' x
+flop _ = unsafeCoerce
+
+upgrade ::
+     (f a `arr` f' a)
+  -> f x -> f' x
+upgrade _ = unsafeCoerce
+#endif
 
 -- * Instances
 
@@ -470,7 +555,7 @@ instance Representable m => Representable (IdentityT m) where
   type Rep (IdentityT m) = Rep m
   index = index .# runIdentityT
   tabulate = IdentityT #. tabulate
-  cotraverse1 = cotraverse1Iso runIdentityT IdentityT
+  cotraverseMap1 = cotraverseMap1Coerce IdentityT
 
 instance Representable ((->) e) where
   type Rep ((->) e) = e
@@ -481,26 +566,34 @@ instance Representable m => Representable (ReaderT e m) where
   type Rep (ReaderT e m) = (e, Rep m)
   index (ReaderT f) (e,k) = index (f e) k
   tabulate = ReaderT . fmap tabulate . curry
-  cotraverse1 = cotraverse1Iso (Comp1 . runReaderT) (ReaderT . unComp1)
+  cotraverseMap1 = cotraverseMap1Coerce (ReaderT . unComp1)
 
 instance (Representable f, Representable g) => Representable (Compose f g) where
   type Rep (Compose f g) = (Rep f, Rep g)
   index (Compose fg) (i,j) = index (index fg i) j
   tabulate = Compose . tabulate . fmap tabulate . curry
-  cotraverse1 = cotraverse1Iso (Comp1 . getCompose) (Compose . unComp1)
+#if __GLASGOW_HASKELL__ >= 800
+  cotraverseMap1 = cotraverseMap1Coerce (Compose . unComp1)
+#else
+  cotraverseMap1 = cotraverseMap1Iso (Comp1 . getCompose) (Compose . unComp1)
+#endif
 
 instance Representable w => Representable (TracedT s w) where
   type Rep (TracedT s w) = (s, Rep w)
   index (TracedT w) (e,k) = index w k e
-  tabulate = TracedT . unCo . collect (Co #. tabulate) . curry
-  cotraverse1 = cotraverse1Iso (Comp1 . runTracedT) (TracedT . unComp1)
+  tabulate = TracedT . collect tabulate . curry
+#if __GLASGOW_HASKELL__ >= 800
+  cotraverseMap1 = cotraverseMap1Coerce (TracedT . unComp1)
+#else
+  cotraverseMap1 = cotraverseMap1Iso (Comp1 . runTracedT) (TracedT . unComp1)
+#endif
 
 instance (Representable f, Representable g) => Representable (Product f g) where
   type Rep (Product f g) = Either (Rep f) (Rep g)
   index (Pair a _) (Left i)  = index a i
   index (Pair _ b) (Right j) = index b j
   tabulate f = Pair (tabulate (f . Left)) (tabulate (f . Right))
-  cotraverse1 = cotraverse1Iso (\(Pair x y) -> x :*: y) (\(x :*: y) -> Pair x y)
+  cotraverseMap1 = cotraverseMap1Iso (\(Pair x y) -> x :*: y) (\(x :*: y) -> Pair x y)
 
 instance Representable f => Representable (Cofree f) where
   type Rep (Cofree f) = Seq (Rep f)
@@ -512,7 +605,9 @@ instance Representable f => Representable (Cofree f) where
   -- this could be derived via isomorphism to
   -- Identity :*: (f :.: Cofree f), but then the instance would be
   -- recursive which would prevent specialization
-  cotraverse1 f = go
+
+  -- Surely there's a better way to do this.
+  cotraverseMap1 f g = go . map1 g
     where
       go w =
         f (map1Identity extract w) :<
@@ -524,13 +619,13 @@ instance Representable f => Representable (Backwards f) where
   type Rep (Backwards f) = Rep f
   index = index .# forwards
   tabulate = Backwards #. tabulate
-  cotraverse1 = cotraverse1Iso forwards Backwards
+  cotraverseMap1 = cotraverseMap1Coerce Backwards
 
 instance Representable f => Representable (Reverse f) where
   type Rep (Reverse f) = Rep f
   index = index .# getReverse
   tabulate = Reverse #. tabulate
-  cotraverse1 = cotraverse1Iso getReverse Reverse
+  cotraverseMap1 = cotraverseMap1Coerce Reverse
 
 instance Representable Monoid.Dual where
   type Rep Monoid.Dual = ()
@@ -564,8 +659,9 @@ instance (Representable f, Representable g) => Representable (f :*: g) where
   index (a :*: _) (Left  i) = index a i
   index (_ :*: b) (Right j) = index b j
   tabulate f = tabulate (f . Left) :*: tabulate (f . Right)
-  cotraverse1 f w =
-    cotraverseMap1 f (\(a :*: _) -> a) w :*: cotraverseMap1 f (\(_ :*: b) -> b) w
+  cotraverseMap1 f g w =
+    cotraverseMap1 f (\q -> case g q of (a :*: _) -> a) w :*:
+    cotraverseMap1 f (\q -> case g q of (_ :*: b) -> b) w
 
 newtype AppCompose w g f = AppCompose { runAppCompose :: w (f :.: g) }
 instance Functor1 w => Functor1 (AppCompose w g) where
@@ -575,10 +671,12 @@ instance (Representable f, Representable g) => Representable (f :.: g) where
   type Rep (f :.: g) = (Rep f, Rep g)
   index (Comp1 fg) (i, j) = index (index fg i) j
   tabulate = Comp1 . tabulate . fmap tabulate . curry
-  cotraverse1 f w =
+
+  -- Can we do better?
+  cotraverseMap1 f g w =
     Comp1 $
     cotraverse1 (cotraverseMap1 f (runIdentity . unComp1) . runAppCompose) $
-    AppCompose w
+    AppCompose $ map1 g w
 
 instance Representable Par1 where
   type Rep Par1 = ()
@@ -589,28 +687,52 @@ instance Representable f => Representable (Rec1 f) where
   type Rep (Rec1 f) = Rep f
   index = index .# unRec1
   tabulate = Rec1 #. tabulate
-  cotraverse1 = cotraverse1Iso unRec1 Rec1
+  cotraverseMap1 = cotraverseMap1Coerce Rec1
 
 instance Representable f => Representable (M1 i c f) where
   type Rep (M1 i c f) = Rep f
   index = index .# unM1
   tabulate = M1 #. tabulate
-  cotraverse1 = cotraverse1Iso unM1 M1
+  cotraverseMap1 = cotraverseMap1Coerce M1
 
-newtype Co f a = Co { unCo :: f a } deriving Functor
+newtype Co f a = Co { unCo :: f a }
 
+#if __GLASGOW_HASKELL__ >= 802
+-- By using GND to derive this instance, we ensure that
+-- future changes to Representable methods don't compromise
+-- the ability to use GND to derive instances.
+deriving instance Representable f => Representable (Co f)
+#else
+-- GND couldn't handle associated types until GHC 8.2
 instance Representable f => Representable (Co f) where
   type Rep (Co f) = Rep f
   tabulate = Co #. tabulate
   index = index .# unCo
-  cotraverse1 = cotraverse1Iso unCo Co
+  collect1 f = Co #. collect1 (unCo #. f)
+  cotraverseMap1 = cotraverseMap1Coerce Co
+#endif
+
+
+instance Representable f => Functor (Co f) where
+  fmap = fmapRep
+  x <$ _ = tabulate (const x)
 
 instance Representable f => Apply (Co f) where
   (<.>) = apRep
+  x <. _ = x
+  (.>) _ = \x -> x
+#if MIN_VERSION_semigroupoids(5,3,1)
+  liftF2 = liftR2
+#endif
 
 instance Representable f => Applicative (Co f) where
   pure = pureRep
   (<*>) = apRep
+#if MIN_VERSION_base(4,10,0)
+  liftA2 = liftR2
+#endif
+  x <* _ = x
+  (*>) _ = \x -> x
 
 instance Representable f => Distributive (Co f) where
   distribute = distributeRep
@@ -622,6 +744,9 @@ instance Representable f => Bind (Co f) where
 instance Representable f => Monad (Co f) where
   return = pure
   (>>=) = bindRep
+
+instance Representable f => MonadFix (Co f) where
+  mfix = mfixRep
 
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 704
 instance (Representable f, Rep f ~ a) => MonadReader a (Co f) where
