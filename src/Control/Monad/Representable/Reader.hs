@@ -40,6 +40,7 @@ import Data.Foldable
 import Data.Functor.Bind
 import Data.Functor.Extend
 import Data.Functor.Identity
+import Data.Functor.Rep.Internal (cotraverseMap1Coerce)
 import Data.Functor.Rep
 #if __GLASGOW_HASKELL__ < 710
 import Data.Traversable
@@ -73,10 +74,14 @@ instance (Representable f, Representable m) => Representable (ReaderT f m) where
   type Rep (ReaderT f m) = (Rep f, Rep m)
   tabulate = ReaderT . tabulate . fmap tabulate . curry
   index = uncurry . fmap index . index . getReaderT
-  cotraverse1 = cotraverse1Iso (Comp1 . getReaderT) (ReaderT . unComp1)
+#if __GLASGOW_HASKELL__ >= 800
+  cotraverseMap1 = cotraverseMap1Coerce (ReaderT . unComp1)
+#else
+  cotraverseMap1 = cotraverseMap1Iso (Comp1 . getReaderT) (ReaderT . unComp1)
+#endif
 
 instance (Representable f, Apply m) => Apply (ReaderT f m) where
-  ReaderT ff <.> ReaderT fa = ReaderT (unCo ((<.>) <$> Co ff <.> Co fa))
+  ReaderT ff <.> ReaderT fa = ReaderT (unCo (Co ((<.>) <$> ff) <.> Co fa))
 
 instance (Representable f, Applicative m) => Applicative (ReaderT f m) where
   pure = ReaderT . pureRep . pure
