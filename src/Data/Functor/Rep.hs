@@ -612,6 +612,17 @@ instance Representable f => Applicative (Co f) where
   pure = pureRep
   (<*>) = apRep
 
+  -- | This method is /O(1)/. 'Representable' functors are isomorphic
+  -- to functions and '<*' for functions drops its second argument and
+  -- returns its first.
+  as <* _  = as
+  -- | This method is /O(1)/. 'Representable' functors are isomorphic
+  -- to functions and '*>' for functions drops its first argument and
+  -- returns its first.
+  _  *> bs = bs
+
+  -- See issue #64: <https://github.com/ekmett/adjunctions/issues/64>
+
 instance Representable f => Distributive (Co f) where
   distribute = distributeRep
   collect = collectRep
