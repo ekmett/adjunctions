@@ -1,5 +1,10 @@
 next [????.??.??]
 -----------------
+* Define `Functor` instance for `Co f` with `fmap = fmapRep` using
+  `Representable f`, this is in line with other instances. Before it
+  used the underlying `Functor` instance which made it easy to
+  accidentally write `deriving (Functor, Applicative, ..) via Co F`
+  which gives a cyclic `Functor` with `DerivingVia`.
 * `(<*)` and `(*>)` of `Applicative (Co f)` are implemented in _O(1)_
   by defining them as constant functions `as <* _ = as` and `_ *> bs =
   bs`. This implementation follows from the laws of `Representable`.
