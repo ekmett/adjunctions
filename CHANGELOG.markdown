@@ -1,5 +1,8 @@
 next [????.??.??]
 -----------------
+* `(<*)` and `(*>)` of `Applicative (Co f)` are implemented in _O(1)_
+  by defining them as constant functions `as <* _ = as` and `_ *> bs =
+  bs`. This implementation follows from the laws of `Representable`.
 * Use more concise `MINIMAL` defaults for the `Adjunction` classes.
 * TODO: Describe `cotraverse1`-related changes
 * The dependencies on `semigroups` and `void` are both now conditional
