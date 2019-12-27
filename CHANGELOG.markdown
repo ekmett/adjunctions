@@ -1,5 +1,10 @@
 next [????.??.??]
 -----------------
+* Define `Functor` instance for `Co f` with `fmap = fmapRep` using
+  `Representable f`, this is in line with other instances. Before it
+  used the underlying `Functor` instance which made it easy to
+  accidentally write `deriving (Functor, Applicative, ..) via Co F`
+  which gives a cyclic `Functor` with `DerivingVia`.
 * Use more concise `MINIMAL` defaults for the `Adjunction` classes.
 * TODO: Describe `cotraverse1`-related changes
 * The dependencies on `semigroups` and `void` are both now conditional
