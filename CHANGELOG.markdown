@@ -1,13 +1,13 @@
 next [????.??.??]
 -----------------
-* Define `Functor` instance for `Co f` with `fmap = fmapRep` using
-  `Representable f`, this is in line with other instances. Before it
-  used the underlying `Functor` instance which made it easy to
-  accidentally write `deriving (Functor, Applicative, ..) via Co F`
-  which gives a cyclic `Functor` with `DerivingVia`.
-* `(<*)` and `(*>)` of `Applicative (Co f)` are implemented in _O(1)_
-  by defining them as constant functions `as <* _ = as` and `_ *> bs =
-  bs`. This implementation follows from the laws of `Representable`.
+* Define the `Functor` instance for `Co` with `fmap = fmapRep`. This brings
+  the `Functor` instance in line with `Co`'s other instances, which also have a
+  `Representable` constraint in the instance context. Previously, it used the
+  underlying `Functor` instance, which made it easy to write looping code if
+  one were to write `deriving (Functor, Applicative, ..) via Co F`.
+* The `(<*)` and `(*>)` methods in the `Applicative` instance for `Co` are
+  now defined to be `as <* _ = as` and `_ *> bs = bs`, which run in _O(1)_
+  time. These implementations follow from the `Representable` laws.
 * Use more concise `MINIMAL` defaults for the `Adjunction` classes.
 * TODO: Describe `cotraverse1`-related changes
 * The dependencies on `semigroups` and `void` are both now conditional
