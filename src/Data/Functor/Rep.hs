@@ -597,7 +597,10 @@ instance Representable f => Representable (M1 i c f) where
   tabulate = M1 #. tabulate
   cotraverse1 = cotraverse1Iso unM1 M1
 
-newtype Co f a = Co { unCo :: f a } deriving Functor
+newtype Co f a = Co { unCo :: f a } 
+
+instance Representable f => Functor (Co f) where
+  fmap = fmapRep
 
 instance Representable f => Representable (Co f) where
   type Rep (Co f) = Rep f
