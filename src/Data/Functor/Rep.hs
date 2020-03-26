@@ -116,7 +116,9 @@ import Data.Sequence (Seq)
 import qualified Data.Sequence as Seq
 import Data.Semigroup hiding (Product)
 import Data.Tagged
+#if !(MIN_VERSION_base(4,8,0))
 import Data.Traversable (Traversable(sequenceA))
+#endif
 import Data.Void
 import GHC.Generics hiding (Rep)
 import Prelude
