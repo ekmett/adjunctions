@@ -11,7 +11,7 @@
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE Trustworthy #-}
 
-#if __GLASGOW_HASKELL__ >= 706 ... #endif
+#if __GLASGOW_HASKELL__ >= 706
 {-# LANGUAGE PolyKinds #-}
 #endif
 
