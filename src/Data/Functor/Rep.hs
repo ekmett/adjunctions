@@ -1,5 +1,4 @@
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
@@ -11,6 +10,11 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE Trustworthy #-}
+
+#if __GLASGOW_HASKELL__ >= 706 ... #endif
+{-# LANGUAGE PolyKinds #-}
+#endif
+
 {-# OPTIONS_GHC -fenable-rewrite-rules #-}
 ----------------------------------------------------------------------
 -- |
