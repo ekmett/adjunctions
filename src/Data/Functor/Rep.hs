@@ -10,6 +10,11 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE Trustworthy #-}
+
+#if __GLASGOW_HASKELL__ >= 706
+{-# LANGUAGE PolyKinds #-}
+#endif
+
 {-# OPTIONS_GHC -fenable-rewrite-rules #-}
 ----------------------------------------------------------------------
 -- |
