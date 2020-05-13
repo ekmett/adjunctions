@@ -93,6 +93,7 @@ import Data.Complex
 #endif
 import Data.Distributive
 import Data.Foldable (Foldable(fold))
+import Data.Function
 import Data.Functor.Bind
 import Data.Functor.Identity
 import Data.Functor.Compose
