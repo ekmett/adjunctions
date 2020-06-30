@@ -2,7 +2,7 @@ name:          adjunctions
 category:      Data Structures, Adjunctions
 version:       4.4
 license:       BSD3
-cabal-version: >= 1.8
+cabal-version: >= 1.10
 license-file:  LICENSE
 author:        Edward A. Kmett
 maintainer:    Edward A. Kmett <ekmett@gmail.com>
@@ -80,6 +80,8 @@ library
 
   ghc-options: -Wall
 
+  default-language: Haskell2010
+
   -- See https://ghc.haskell.org/trac/ghc/wiki/Migration/8.0#base-4.9.0.0
   if impl(ghc >= 8.0)
     ghc-options: -Wcompat -Wnoncanonical-monad-instances -Wnoncanonical-monadfail-instances
@@ -100,3 +102,4 @@ test-suite spec
   other-modules: GenericsSpec
 
   ghc-options: -Wall -threaded -rtsopts
+  default-language: Haskell2010
