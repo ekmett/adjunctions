@@ -438,7 +438,7 @@ tabulateCotraverse1 =
 
 -- | Derive 'index', given @'Rep' f ~ 'Logarithm' f@
 indexLogarithm :: f a -> Logarithm f -> a
-indexLogarithm = flip runLogarithm
+indexLogarithm i (Logarithm f) = f i
 
 -- | Derive 'cotraverse1' via an isomorphism
 cotraverse1Iso ::
