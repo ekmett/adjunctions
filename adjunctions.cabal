@@ -16,10 +16,7 @@ build-type:    Simple
 extra-source-files:
   .gitignore
   .hlint.yaml
-  .travis.yml
   .vim.custom
-  travis/cabal-apt-install
-  travis/config
   CHANGELOG.markdown
   README.markdown
 tested-with:   GHC == 7.4.2
