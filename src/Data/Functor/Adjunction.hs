@@ -181,7 +181,7 @@ instance Adjunction w m =>
 instance Adjunction m w =>
          Adjunction (WriterT s m) (TracedT s w) where
   unit   = TracedT . leftAdjunct (\ma s -> WriterT (fmap (\a -> (a, s)) ma))
-  counit = rightAdjunct (\(t, s) -> ($s) <$> runTracedT t) . runWriterT
+  counit = rightAdjunct (\(t, s) -> ($ s) <$> runTracedT t) . runWriterT
 
 instance (Adjunction f g, Adjunction f' g') =>
          Adjunction (Compose f' f) (Compose g g') where
