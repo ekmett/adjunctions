@@ -24,7 +24,6 @@ module Data.Functor.Contravariant.Rep
   , contramapRep
   ) where
 
-import Control.Monad.Reader
 import Data.Functor.Contravariant
 import Data.Functor.Product
 import Data.Profunctor

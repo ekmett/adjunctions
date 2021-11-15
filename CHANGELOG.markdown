@@ -1,3 +1,7 @@
+next [????.??.??]
+-----------------
+* Allow building with `transformers-0.6.*` and `mtl-2.3.*`.
+
 4.4 [2018.01.28]
 ----------------
 * Added `imapRep`, `ifoldMapRep`, `itraverseRep` to make it easier to define representable `FunctorWithIndex`, `FoldableWithIndex`, `TraversableWithIndex` instances from the `lens` package.
