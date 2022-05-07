@@ -100,7 +100,7 @@ import Control.Comonad.Trans.Class
 import Control.Comonad.Trans.Traced
 import Control.Comonad.Cofree
 import Control.Monad.Trans.Identity
-import Control.Monad.Reader
+import Control.Monad.Reader (MonadReader(..), ReaderT(..))
 #if MIN_VERSION_base(4,4,0)
 import Data.Complex
 #endif
