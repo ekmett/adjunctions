@@ -13,6 +13,10 @@ next [????.??.??]
 * The dependencies on `semigroups` and `void` are both now conditional
   on the GHC version being old enough that they're not in `base`.
 
+4.4.2 [2022.08.15]
+------------------
+* Fix the build with `mtl-2.3.1`.
+
 4.4.1 [2022.05.07]
 ------------------
 * Allow building with `transformers-0.6.*` and `mtl-2.3.*`.
