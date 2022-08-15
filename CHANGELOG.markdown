@@ -1,3 +1,7 @@
+next [????.??.??]
+-----------------
+* Fix the build with `mtl-2.3.1`.
+
 4.4.1 [2022.05.07]
 ------------------
 * Allow building with `transformers-0.6.*` and `mtl-2.3.*`.

@@ -42,7 +42,7 @@ import Control.Monad
 import Data.Functor.Bind
 import Data.Functor.Bind.Trans
 import Control.Monad.State.Class
-import Control.Monad.Cont.Class
+import Control.Monad.Cont.Class (MonadCont(..))
 import Control.Monad.Reader.Class
 import Control.Monad.Writer.Class
 import Control.Monad.Free.Class
