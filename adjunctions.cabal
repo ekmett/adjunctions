@@ -1,7 +1,7 @@
 name:          adjunctions
 category:      Data Structures, Adjunctions
 version:       4.4.2
-license:       BSD3
+license:       BSD2
 cabal-version: >= 1.10
 license-file:  LICENSE
 author:        Edward A. Kmett
