@@ -66,14 +66,14 @@ composedAdjoint (AdjointT a1) (AdjointT a2) =
 	AdjointT $ (fmap . fmap) Comp1 $ Comp1 $ 
 	fmap (\x->fmap ((>>= (\y-> (\y2->((\z->(\x2->(x2,z)) <$> y2 ) <$>y)) <$> x)) ) a2 ) a1
 
--- | Sequence composition two adjoints
-composedAdjoint1 :: (Adjunction f g, Adjunction f2 g2, Monad m)
+-- | Sequence composition of two adjoints
+seqComposedAdjoint :: (Adjunction f g, Adjunction f2 g2, Monad m)
 	=> (a -> AdjointT f g m b) -> (b -> AdjointT f2 g2 m c) -> a -> AdjointT (f2 :.: f) (g :.: g2) m c
-composedAdjoint1 f1 f2 a =
+seqComposedAdjoint f1 f2 a =
 	fmap snd $ (>>= (\b-> composedAdjoint (return ()) (f2 b) )) $ 
 	fmap fst $ composedAdjoint (f1 a) (return ())
 
--- Combination two adjoint in one
+-- Combination of two adjoints in one
 combineAdjoint :: (Adjunction f g, Adjunction f2 g2, Monad m)
 	=> AdjointT f g m a -> AdjointT f2 g2 m b -> AdjointT (f :+: f2) (g :*: g2) m (Either a b)
 combineAdjoint (AdjointT a1) (AdjointT a2) = 

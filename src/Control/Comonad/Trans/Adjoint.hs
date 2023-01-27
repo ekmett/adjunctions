@@ -63,14 +63,14 @@ instance (Adjunction f g, Monad m) => Applicative (AdjointT f g m) where
 instance (Adjunction f g, Distributive g) => ComonadTrans (AdjointT f g) where
   lower = counit . fmap distribute . runAdjointT
 
--- | Cmposed two adjoint in one
+-- | Compose two adjoints in one
 compsedAdjoint :: (Adjunction f g, Adjunction f2 g2, Comonad w, ComonadApply w, Functor g)
 	=> AdjointT f g w a -> AdjointT f2 g2 w b -> AdjointT (f2 :.: f) (g :.: g2) w (a,b)
 compsedAdjoint (AdjointT a1) (AdjointT a2) = 
 	AdjointT $ (fmap . fmap) Comp1 $ Comp1 $ 
 	fmap (\x-> fmap (\y-> liftW2 (\t h-> fmap (\a-> fmap (\b-> (a,b) )  t) h) x y )  a1 ) a2
 
--- | Combine two adjoint in list union adjoints
+-- | Combine two adjoints in list of union adjoints
 combineAdjoint :: (Adjunction f g, Adjunction f2 g2, Comonad w, Functor g)
 	=> AdjointT f g w a -> AdjointT f2 g2 w b -> [AdjointT (f :+: f2) (g :*: g2) w (Either a b)]
 combineAdjoint (AdjointT a1) (AdjointT a2) = 
