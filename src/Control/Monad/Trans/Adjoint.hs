@@ -1,5 +1,6 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeOperators #-}
 #if __GLASGOW_HASKELL__ >= 702 && __GLASGOW_HASKELL__ < 710
 {-# LANGUAGE Trustworthy #-}
 #endif
@@ -25,6 +26,7 @@ import Prelude hiding (sequence)
 #if __GLASGOW_HASKELL__ < 710
 import Control.Applicative
 #endif
+import GHC.Generics
 import Control.Monad (ap, liftM)
 import Control.Monad.Trans.Class
 import Data.Traversable
@@ -56,3 +58,25 @@ instance (Adjunction f g, Monad m) => Monad (AdjointT f g m) where
 -- | Exploiting this instance requires that we have the missing Traversables for Identity, (,)e and IdentityT
 instance (Adjunction f g, Traversable f) => MonadTrans (AdjointT f g) where
   lift = AdjointT . fmap sequence . unit
+
+-- | Comosed two adjoint in one
+composedAdjoint ::(Adjunction f g, Adjunction f2 g2, Monad m)
+	=> AdjointT f g m a -> AdjointT f2 g2 m b -> AdjointT (f2 :.: f) (g :.: g2) m (a,b)
+composedAdjoint (AdjointT a1) (AdjointT a2) = 
+	AdjointT $ (fmap . fmap) Comp1 $ Comp1 $ 
+	fmap (\x->fmap ((>>= (\y-> (\y2->((\z->(\x2->(x2,z)) <$> y2 ) <$>y)) <$> x)) ) a2 ) a1
+
+-- | Sequence composition of two adjoints
+seqComposedAdjoint :: (Adjunction f g, Adjunction f2 g2, Monad m)
+	=> (a -> AdjointT f g m b) -> (b -> AdjointT f2 g2 m c) -> a -> AdjointT (f2 :.: f) (g :.: g2) m c
+seqComposedAdjoint f1 f2 a =
+	fmap snd $ (>>= (\b-> composedAdjoint (return ()) (f2 b) )) $ 
+	fmap fst $ composedAdjoint (f1 a) (return ())
+
+-- Combination of two adjoints in one
+combineAdjoint :: (Adjunction f g, Adjunction f2 g2, Monad m)
+	=> AdjointT f g m a -> AdjointT f2 g2 m b -> AdjointT (f :+: f2) (g :*: g2) m (Either a b)
+combineAdjoint (AdjointT a1) (AdjointT a2) = 
+	AdjointT $ 
+	((fmap . fmap) (L1 . fmap Left) a1) :*: 
+	((fmap . fmap) (R1 . fmap Right) a2)
