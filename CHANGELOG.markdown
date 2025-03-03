@@ -13,6 +13,10 @@ next [????.??.??]
 * The dependencies on `semigroups` and `void` are both now conditional
   on the GHC version being old enough that they're not in `base`.
 
+4.4.3 [2025.03.03]
+------------------
+* Drop support for pre-8.0 versions of GHC.
+
 4.4.2 [2022.08.15]
 ------------------
 * Fix the build with `mtl-2.3.1`.
