@@ -36,7 +36,7 @@ tested-with:   GHC == 7.4.2
 
 source-repository head
   type: git
-  location: git://github.com/ekmett/adjunctions.git
+  location: https://github.com/ekmett/adjunctions.git
 
 library
   hs-source-dirs: src
