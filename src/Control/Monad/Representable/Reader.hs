@@ -1,5 +1,5 @@
-{-# LANGUAGE GADTs, TypeFamilies, TypeOperators, CPP, FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, UndecidableInstances, TypeSynonymInstances #-}
-{-# OPTIONS_GHC -fenable-rewrite-rules -fno-warn-orphans #-}
+{-# LANGUAGE GADTs, TypeFamilies, TypeOperators, FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, UndecidableInstances, TypeSynonymInstances #-}
+{-# OPTIONS_GHC -fenable-rewrite-rules -Wno-orphans #-}
 ----------------------------------------------------------------------
 -- |
 -- Module      :  Control.Monad.Representable.Reader
@@ -77,21 +77,12 @@ instance (Representable f, Bind m) => Bind (ReaderT f m) where
   ReaderT fm >>- f = ReaderT $ tabulate (\a -> index fm a >>- flip index a . getReaderT . f)
 
 instance (Representable f, Monad m) => Monad (ReaderT f m) where
-#if __GLASGOW_HASKELL__ < 710
-  return = ReaderT . pureRep . return
-#endif
   ReaderT fm >>= f = ReaderT $ tabulate (\a -> index fm a >>= flip index a . getReaderT . f)
-
-#if __GLASGOW_HASKELL >= 704
 
 instance (Representable f, Monad m, Rep f ~ e) => MonadReader e (ReaderT f m) where
   ask = ReaderT (tabulate return)
   local f m = readerT $ \r -> runReaderT m (f r)
-#if MIN_VERSION_transformers(0,3,0)
   reader = readerT . fmap return
-#endif
-
-#endif
 
 instance Representable f => MonadTrans (ReaderT f) where
   lift = ReaderT . pureRep

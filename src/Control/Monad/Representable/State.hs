@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE TypeSynonymInstances #-}
@@ -35,9 +34,6 @@ module Control.Monad.Representable.State
    , MonadState(..)
    ) where
 
-#if __GLASGOW_HASKELL__ < 710
-import Control.Applicative
-#endif
 import Control.Monad
 import Data.Functor.Bind
 import Data.Functor.Bind.Trans
@@ -148,9 +144,6 @@ instance (Representable g, Bind m) => Bind (StateT g m) where
   StateT m >>- f = StateT $ fmap (>>- rightAdjunctRep (runStateT . f)) m
 
 instance (Representable g, Monad m) => Monad (StateT g m) where
-#if __GLASGOW_HASKELL__ < 710
-  return = StateT . leftAdjunctRep return
-#endif
   StateT m >>= f = StateT $ fmap (>>= rightAdjunctRep (runStateT . f)) m
 
 instance Representable f => BindTrans (StateT f) where
@@ -162,9 +155,7 @@ instance Representable f => MonadTrans (StateT f) where
 instance (Representable g, Monad m, Rep g ~ s) => MonadState s (StateT g m) where
   get = stateT $ \s -> return (s, s)
   put s = StateT $ pureRep $ return ((),s)
-#if MIN_VERSION_transformers(0,3,0)
   state f = stateT (return . f)
-#endif
 
 instance (Representable g, MonadReader e m) => MonadReader e (StateT g m) where
   ask = lift ask

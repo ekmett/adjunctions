@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -79,9 +78,7 @@ module Data.Functor.Rep
 import Control.Applicative
 import Control.Applicative.Backwards
 import Control.Arrow ((&&&))
-#if __GLASGOW_HASKELL__ >= 708
 import Data.Coerce
-#endif
 import Control.Comonad
 import Control.Comonad.Trans.Class
 import Control.Comonad.Trans.Traced
@@ -89,9 +86,7 @@ import Control.Comonad.Cofree
 import Control.Monad.Fix (MonadFix(..))
 import Control.Monad.Trans.Identity
 import Control.Monad.Reader (MonadReader(..), ReaderT(..))
-#if MIN_VERSION_base(4,4,0)
 import Data.Complex
-#endif
 import Data.Distributive
 import Data.Foldable (Foldable(fold))
 import Data.Function
@@ -108,9 +103,6 @@ import Data.Sequence (Seq)
 import qualified Data.Sequence as Seq
 import Data.Semigroup hiding (Product)
 import Data.Tagged
-#if !(MIN_VERSION_base(4,8,0))
-import Data.Traversable (Traversable(sequenceA))
-#endif
 import Data.Void
 import GHC.Generics hiding (Rep)
 import Prelude hiding (lookup)
@@ -203,7 +195,6 @@ instance GIndex Par1 where
   gindex' (Par1 a) () = a
 
 type instance GRep' (Rec1 f) = WrappedRep f
-#if __GLASGOW_HASKELL__ >= 708
 -- Using coerce explicitly here seems a bit more readable, and
 -- likely a drop easier on the simplifier.
 instance Representable f => GTabulate (Rec1 f) where
@@ -212,12 +203,6 @@ instance Representable f => GTabulate (Rec1 f) where
 instance Representable f => GIndex (Rec1 f) where
   gindex' = coerce (index :: f a -> Rep f -> a)
                  :: forall a . Rec1 f a -> WrappedRep f -> a
-#else
-instance Representable f => GTabulate (Rec1 f) where
-  gtabulate' = Rec1 #. tabulate .# (. WrapRep)
-instance Representable f => GIndex (Rec1 f) where
-  gindex' = (. unwrapRep) #. index .# unRec1
-#endif
 
 type instance GRep' (M1 i c f) = GRep' f
 instance GTabulate f => GTabulate (M1 i c f) where
@@ -413,12 +398,10 @@ instance Representable Monoid.Sum where
   index (Monoid.Sum s) () = s
   tabulate f = Monoid.Sum (f ())
 
-#if MIN_VERSION_base(4,4,0)
 instance Representable Complex where
   type Rep Complex = Bool
   index (r :+ i) key = if key then i else r
   tabulate f = f False :+ f True
-#endif
 
 instance Representable U1 where
   type Rep U1 = Void
@@ -476,11 +459,9 @@ instance Representable f => Monad (Co f) where
   return = pure
   (>>=) = bindRep
 
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 704
 instance (Representable f, Rep f ~ a) => MonadReader a (Co f) where
   ask = askRep
   local = localRep
-#endif
 
 instance (Representable f, Semigroup (Rep f)) => Extend (Co f) where
   extended = extendedRep

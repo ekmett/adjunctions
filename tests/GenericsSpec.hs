@@ -1,10 +1,7 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeFamilies #-}
 ----------------------------------------------------------------------
 -- |
 -- Copyright   :  (c) Edward Kmett 2011-2014
@@ -20,11 +17,7 @@ module GenericsSpec (main, spec) where
 import           Data.Distributive (Distributive(..))
 import           Data.Functor.Rep (Representable(..), WrappedRep(..))
 
-#if __GLASGOW_HASKELL__ >= 706
-import           Generics.Deriving.Base hiding (Rep)
-#else
-import qualified Generics.Deriving.TH as Generics (deriveAll1)
-#endif
+import           GHC.Generics hiding (Rep)
 
 import           Test.Hspec
 
@@ -101,12 +94,6 @@ polyRecRep1 = Left (WrapRep (), WrapRep $ Right ())
 polyRecRep2 = Left (WrapRep (), WrapRep $ Left (WrapRep (), WrapRep $ Right ()))
 polyRecRep3 = Right ()
 
-#if __GLASGOW_HASKELL__ >= 706
 deriving instance Generic1 Id
 deriving instance Generic1 Stream
 deriving instance Generic1 PolyRec
-#else
-$(Generics.deriveAll1 ''Id)
-$(Generics.deriveAll1 ''Stream)
-$(Generics.deriveAll1 ''PolyRec)
-#endif
