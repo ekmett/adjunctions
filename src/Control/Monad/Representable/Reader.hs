@@ -1,5 +1,5 @@
 {-# LANGUAGE GADTs, TypeFamilies, TypeOperators, CPP, FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, UndecidableInstances, TypeSynonymInstances #-}
-{-# OPTIONS_GHC -fenable-rewrite-rules -fno-warn-orphans #-}
+{-# OPTIONS_GHC -fenable-rewrite-rules -Wno-orphans #-}
 ----------------------------------------------------------------------
 -- |
 -- Module      :  Control.Monad.Representable.Reader
@@ -25,25 +25,16 @@ module Control.Monad.Representable.Reader
   , module Data.Functor.Rep
   ) where
 
-#if __GLASGOW_HASKELL__ < 710
-import Control.Applicative
-#endif
 import Control.Comonad
 import Control.Monad.Reader.Class
 import Control.Monad.Writer.Class as Writer
 import Control.Monad.Trans.Class
 import Control.Monad.IO.Class
 import Data.Distributive
-#if __GLASGOW_HASKELL__ < 710
-import Data.Foldable
-#endif
 import Data.Functor.Bind
 import Data.Functor.Extend
 import Data.Functor.Identity
 import Data.Functor.Rep
-#if __GLASGOW_HASKELL__ < 710
-import Data.Traversable
-#endif
 #if !(MIN_VERSION_base(4,11,0))
 import Data.Semigroup
 #endif
@@ -86,21 +77,12 @@ instance (Representable f, Bind m) => Bind (ReaderT f m) where
   ReaderT fm >>- f = ReaderT $ mzipWithRep (>>-) fm $ distribute (getReaderT . f)
 
 instance (Representable f, Monad m) => Monad (ReaderT f m) where
-#if __GLASGOW_HASKELL__ < 710
-  return = ReaderT . pureRep . return
-#endif
   ReaderT fm >>= f = ReaderT $ mzipWithRep (>>=) fm $ distribute (getReaderT . f)
-
-#if __GLASGOW_HASKELL >= 704
 
 instance (Representable f, Monad m, Rep f ~ e) => MonadReader e (ReaderT f m) where
   ask = ReaderT (tabulate return)
   local f m = readerT $ \r -> runReaderT m (f r)
-#if MIN_VERSION_transformers(0,3,0)
   reader = readerT . fmap return
-#endif
-
-#endif
 
 instance Representable f => MonadTrans (ReaderT f) where
   lift = ReaderT . pureRep

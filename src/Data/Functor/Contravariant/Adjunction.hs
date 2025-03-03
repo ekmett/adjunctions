@@ -1,8 +1,5 @@
 {-# LANGUAGE Rank2Types, MultiParamTypeClasses, FunctionalDependencies, UndecidableInstances #-}
-{-# LANGUAGE CPP #-}
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Trustworthy #-}
-#endif
 -----------------------------------------------------------------------------
 -- |
 -- Copyright   :  (C) 2011-2013 Edward Kmett
@@ -21,9 +18,6 @@ module Data.Functor.Contravariant.Adjunction
   , coindexAdjunction
   ) where
 
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ < 707
-import Control.Monad.Instances ()
-#endif
 import Data.Functor.Contravariant
 import Data.Functor.Contravariant.Rep
 import Data.Profunctor
@@ -41,9 +35,7 @@ import Data.Profunctor
 -- permit @unsafePerformIO@, and therefore does not exist.
 
 class (Contravariant f, Representable g) => Adjunction f g | f -> g, g -> f where
-#if __GLASGOW_HASKELL__ >= 708
   {-# MINIMAL (unit | leftAdjunct), (rightAdjunct | counit) #-}
-#endif
   unit :: a -> g (f a) -- monad in Hask
   counit :: a -> f (g a) -- comonad in Hask^op
   leftAdjunct  :: (b -> f a) -> a -> g b
@@ -59,7 +51,7 @@ class (Contravariant f, Representable g) => Adjunction f g | f -> g, g -> f wher
 -- This can be used with the combinators from the @lens@ package.
 --
 -- @'adjuncted' :: 'Adjunction' f g => 'Iso'' (b -> f a) (a -> g b)@
-adjuncted :: (Adjunction f g, Profunctor p, Functor h) 
+adjuncted :: (Adjunction f g, Profunctor p, Functor h)
           => p (a -> g b) (h (c -> g d)) -> p (b -> f a) (h (d -> f c))
 adjuncted = dimap leftAdjunct (fmap rightAdjunct)
 {-# INLINE adjuncted #-}

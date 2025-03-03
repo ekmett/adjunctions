@@ -4,16 +4,9 @@
            , TypeOperators
            , UndecidableInstances #-}
 
-{-# LANGUAGE CPP #-}
-#if __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Trustworthy #-}
-#endif
-#if __GLASGOW_HASKELL__ >= 708
 {-# LANGUAGE EmptyCase #-}
-#endif
-#if __GLASGOW_HASKELL__ >= 800
 {-# OPTIONS_GHC -Wno-trustworthy-safe #-}
-#endif
 
 -------------------------------------------------------------------------------------------
 -- |
@@ -38,14 +31,8 @@ module Data.Functor.Adjunction
   , splitL, unsplitL
   ) where
 
-#if __GLASGOW_HASKELL__ < 710
-import Control.Applicative
-#endif
 import Control.Arrow ((&&&), (|||))
 import Control.Monad.Free
-#if __GLASGOW_HASKELL__ < 707
-import Control.Monad.Instances ()
-#endif
 import Control.Monad.Trans.Identity
 import Control.Monad.Trans.Reader
 import Control.Monad.Trans.Writer
@@ -91,9 +78,7 @@ import GHC.Generics
 -- > leftAdjunct counit = id
 class (Functor f, Representable u) =>
       Adjunction f u | f -> u, u -> f where
-#if __GLASGOW_HASKELL__ >= 708
   {-# MINIMAL (unit | leftAdjunct), (rightAdjunct | counit) #-}
-#endif
   unit         :: a -> u (f a)
   counit       :: f (u a) -> a
   leftAdjunct  :: (f a -> b) -> a -> u b
@@ -217,11 +202,7 @@ instance Adjunction V1 U1 where
   counit = absurdV1
 
 absurdV1 :: V1 a -> b
-#if __GLASGOW_HASKELL__ >= 708
 absurdV1 x = case x of {}
-#else
-absurdV1 x = x `seq` undefined
-#endif
 
 instance Adjunction Par1 Par1 where
   leftAdjunct f = Par1 . f . Par1
