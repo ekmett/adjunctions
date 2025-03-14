@@ -49,21 +49,19 @@ library
     UndecidableInstances
 
   build-depends:
-    array               >= 0.3.0.2 && < 0.7,
     base                >= 4.9     && < 5,
     comonad             >= 4       && < 6,
     containers          >= 0.3     && < 0.9,
-    contravariant       >= 1       && < 2,
     distributive        >= 0.5.1   && < 1,
     free                >= 4       && < 6,
     mtl                 >= 2.0.1   && < 2.4,
     profunctors         >= 4       && < 6,
     tagged              >= 0.7     && < 1,
     semigroupoids       >= 4       && < 7,
-    semigroups          >= 0.11    && < 1,
-    transformers        >= 0.5.2   && < 0.7,
-    transformers-compat >= 0.3     && < 1,
-    void                >= 0.5.5.1 && < 1
+    transformers        >= 0.5.2   && < 0.7
+
+  if !impl(ghc>=8.6)
+    build-depends: contravariant (>=1.5 && <2)
 
   exposed-modules:
     Control.Comonad.Representable.Store
