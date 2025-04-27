@@ -110,8 +110,6 @@ import Data.Functor1.Applied
 import qualified Data.Monoid as Monoid
 import Data.Profunctor.Unsafe
 import Data.Proxy
-import Data.Sequence (Seq)
-import qualified Data.Sequence as Seq
 import Data.Semigroup hiding (Product)
 import Data.Tagged
 import Data.Void
@@ -493,12 +491,10 @@ instance (Representable f, Representable g) => Representable (Product f g) where
   cotraverse1 = cotraverse1Iso (\(Pair x y) -> x :*: y) (\(x :*: y) -> Pair x y)
 
 instance Representable f => Representable (Cofree f) where
-  type Rep (Cofree f) = Seq (Rep f)
-  index (a :< as) key = case Seq.viewl key of
-      Seq.EmptyL -> a
-      k Seq.:< ks -> index (index as k) ks
-  tabulate f = f Seq.empty :< tabulate (\k -> tabulate (f . (k Seq.<|)))
-
+  type Rep (Cofree f) = [Rep f]
+  index = flip (foldr f extract) where
+    f x xs ys = xs (index (unwrap ys) x)
+  tabulate = coiterW (\f -> tabulate (\x -> f . (:) x))
   -- this could be derived via isomorphism to
   -- Identity :*: (f :.: Cofree f), but then the instance would be
   -- recursive which would prevent specialization
