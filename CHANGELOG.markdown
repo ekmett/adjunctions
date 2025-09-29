@@ -1,3 +1,7 @@
+next [????.??.??]
+-----------------
+* Remove unused dependencies.
+
 4.4.3 [2025.03.03]
 ------------------
 * Drop support for pre-8.0 versions of GHC.
