@@ -2,6 +2,10 @@
            , MultiParamTypeClasses
            , FunctionalDependencies
            , TypeOperators
+           , TypeFamilies
+           , DeriveFunctor
+           , DeriveGeneric
+           , StandaloneDeriving
            , UndecidableInstances #-}
 
 {-# LANGUAGE Trustworthy #-}
@@ -29,6 +33,9 @@ module Data.Functor.Adjunction
   , cozipL, uncozipL
   , extractL, duplicateL
   , splitL, unsplitL
+  -- * 'RepAdjunction'
+  , RepAdjunction(..), TaggedRep(..)
+  , fromTaggedRep, toTaggedRep
   ) where
 
 import Control.Arrow ((&&&), (|||))
@@ -41,6 +48,7 @@ import Control.Comonad.Cofree
 import Control.Comonad.Trans.Env
 import Control.Comonad.Trans.Traced
 
+import Data.Distributive
 import Data.Functor.Identity
 import Data.Functor.Compose
 import Data.Functor.Product
@@ -48,7 +56,7 @@ import Data.Functor.Rep
 import Data.Functor.Sum
 import Data.Profunctor
 import Data.Void
-import GHC.Generics
+import GHC.Generics hiding (Rep)
 
 -- | An adjunction between Hask and Hask.
 --
@@ -156,6 +164,56 @@ uncozipL = fmap Left ||| fmap Right
 -- Requires deprecated Impredicative types
 -- limitR :: Adjunction f u => (forall a. u a) -> u (forall a. a)
 -- limitR = leftAdjunct (rightAdjunct (\(x :: forall a. a) -> x))
+
+-- | Any instance of 'Representable' automatically has a left adjoint.
+-- This newtype wrapper provides that instance, where 'TaggedRep' is the
+-- automatically defined left adjoint.
+--
+-- Note that all adjoints are unique up to isomorphism, so if @u@ actually
+-- /does/ have a left-adjoint instance (@'Adjuction' f u@), it means that
+-- @f@ is isomorphic to @'TaggedRep' f@.  You can convert between the two
+-- using 'fromTaggedRep' and 'toTaggedRep'.
+newtype RepAdjunction u a = RepAdjunction { getRepAdjunction :: u a }
+  deriving (Functor, Show, Eq, Ord, Generic)
+
+data TaggedRep u a = TaggedRep { trRep :: Rep u, trTag :: a }
+  deriving (Functor, Generic)
+deriving instance (Show (Rep u), Show a) => Show (TaggedRep u a)
+deriving instance (Eq (Rep u), Eq a) => Eq (TaggedRep u a)
+deriving instance (Ord (Rep u), Ord a) => Ord (TaggedRep u a)
+
+instance Distributive u => Distributive (RepAdjunction u) where
+    distribute = RepAdjunction . distribute . fmap getRepAdjunction
+    collect f  = RepAdjunction . collect (getRepAdjunction . f)
+
+instance Representable u => Representable (RepAdjunction u) where
+    type Rep (RepAdjunction u) = Rep u
+    tabulate f = RepAdjunction $ tabulate f
+    index      = index . getRepAdjunction
+
+instance Representable u => Adjunction (TaggedRep u) (RepAdjunction u) where
+    unit x = RepAdjunction $ tabulate (`TaggedRep` x)
+    counit (TaggedRep i (RepAdjunction x)) = index x i
+
+    leftAdjunct f x = RepAdjunction $ tabulate (f . (`TaggedRep` x))
+    rightAdjunct f (TaggedRep i x) = index (f x) i
+
+-- | If we have an @'Adjunction' f u@, then the left adjoint @f@ is
+-- necessarily isomorphic to @'TaggedRep' u@, the "automatically
+-- derivable" left adjoint.  This converts from that automatically derived
+-- left adjoint into the "official" left adjoint @f@.
+fromTaggedRep :: Adjunction f u => TaggedRep u a -> f a
+fromTaggedRep (TaggedRep i x) = index (unit x) i
+
+-- | If we have an @'Adjunction' f u@, then the left adjoint @f@ is
+-- necessarily isomorphic to @'TaggedRep' u@, the "automatically
+-- derivable" left adjoint.  This converts from the "official" left adjoint
+-- @f@ into that automatically derived left adjoint.
+toTaggedRep :: Adjunction f u => f a -> TaggedRep u a
+toTaggedRep x = TaggedRep (indexAdjunction (tabulate id) i) y
+  where
+    (y, i) = splitL x
+
 
 instance Adjunction ((,) e) ((->) e) where
   leftAdjunct f a e      = f (e, a)
